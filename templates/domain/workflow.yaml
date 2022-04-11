@@ -1,0 +1,29 @@
+version: "0.1"
+
+workflow:
+  - extract_to_s3
+  - load_to_ods
+  - build_dim
+  - build_fact
+  - build_dm
+
+jobs:
+  extract_to_s3:
+    description: "extract log from excel to s3"
+    type: python
+  
+  load_to_ods:
+    description: "load log to ods"
+    type: glue
+
+  build_dim:
+    description: "build dim"
+    type: glue
+
+  build_fact:
+    description: "build fact"
+    type: glue
+
+  build_dm:
+    description: "build fact"
+    type: redshift
