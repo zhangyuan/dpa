@@ -11,19 +11,24 @@ jobs:
   extract_to_s3:
     description: "extract log from excel to s3"
     type: python
+    entrypoint: raw/extract.py
   
   load_to_ods:
     description: "load log to ods"
-    type: glue
+    type: glue-sql
+    entrypoint: ods/ods.sql
 
   build_dim:
     description: "build dim"
-    type: glue
+    type: glue-sql
+    entrypoint: dw/dim.sql
 
   build_fact:
     description: "build fact"
-    type: glue
+    type: glue-sql
+    entrypoint: dw/fact.sql
 
   build_dm:
     description: "build fact"
     type: redshift
+    entrypoint: dm/dm.sql
