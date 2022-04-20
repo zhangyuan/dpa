@@ -3,3 +3,5 @@ pkged.go
 /.vscode/
 /build/
 /workflows/
+.pyc
+__pycache__
