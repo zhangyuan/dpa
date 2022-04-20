@@ -8,10 +8,13 @@ workflow:
   - build_dm
 
 jobs:
-  extract_to_s3:
+  extract_to_raw_storage:
     description: "extract log from excel to s3"
     type: python
     entrypoint: raw/extract.py
+    args:
+      source_path: s3://sourceBucket/source/
+      raw_path: s3://rawStorageBucket/raw/
   
   load_to_ods:
     description: "load log to ods"
