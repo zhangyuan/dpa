@@ -6,6 +6,9 @@ build: clean
 clean:
 	rm -rf build
 
+install:
+	cp build/dp `go env GOPATH`/bin/
+
 linux_amd64:
 	pkger && env GOOS=linux GOARCH=amd64 go build -ldflags "-w" -o build/dp-linux_amd64 main.go
 darwin_amd64:
@@ -13,6 +16,6 @@ darwin_amd64:
 windows_amd64:
 	pkger && env GOOS=windows GOARCH=amd64 go build -ldflags "-w" -o build/dp-windows_amd64.exe main.go
 compress:
-	upx build/dp-* 
+	upx build/dp-*
 
 release: clean linux_amd64 darwin_amd64 windows_amd64
