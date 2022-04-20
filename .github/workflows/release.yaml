@@ -1,12 +1,9 @@
-name: Build
+name: Release
 
 on:
   push:
-    branches:
-      - "*"
-    tags-ignore:
-      - "v*"
-  pull_request: {}
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -23,12 +20,14 @@ jobs:
       with:
         version: v1.45
     - run: go mod download
-    - run: go install github.com/markbates/pkger/cmd/pkger
     - run: make build
     - run: make release
     - run: make compress
-    - uses: actions/upload-artifact@v3
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
       with:
-        name: binaries
-        path: build/dp-*
-        retention-days: 5
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: build/dp-*
+        tag: ${{ github.ref }}
+        overwrite: true
+        file_glob: true
