@@ -12,4 +12,7 @@ install:
 compress:
 	upx dp
 
-release: clean buld
+e2e: install
+	(mkdir /tmp/e2e && cd /tmp/e2e && dp init)
+
+release: clean build compress
