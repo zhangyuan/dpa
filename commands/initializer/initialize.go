@@ -1,6 +1,7 @@
 package initializer
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -21,14 +22,14 @@ func Initialize(directoryPath string) error {
 		}
 	}
 
-	_ = pkger.Include("templates/")
+	_ = pkger.Include("/templates")
 
 	var makeFullPath = func(s string) string {
 		return strings.TrimSuffix(directoryPath, "/") + "/" + strings.TrimPrefix(s, "/")
 	}
 	err := pkger.Walk("/templates", func(fullPath string, info fs.FileInfo, err error) error {
 		if err != nil {
-			return err
+			return errors.Wrap(err, "err in walk")
 		}
 		templatePath := fullPath[len("dp:/templates"):]
 
@@ -39,15 +40,6 @@ func Initialize(directoryPath string) error {
 				return errors.Wrapf(err, "fail to make dir %s", targetPath)
 			}
 		} else {
-			templateFile, err := pkger.Open(fullPath)
-			if err != nil {
-				return errors.Wrap(err, "fail to open template")
-			}
-
-			defer templateFile.Close()
-
-			buf := make([]byte, 10)
-
 			targetFile, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE, 0666)
 
 			if err != nil {
@@ -56,11 +48,24 @@ func Initialize(directoryPath string) error {
 
 			defer targetFile.Close()
 
+			if info.Size() == 0 {
+				return nil
+			}
+
+			templateFile, err := pkger.Open(fullPath)
+			if err != nil {
+				return errors.Wrap(err, "fail to open template")
+			}
+
+			defer templateFile.Close()
+
+			buf := make([]byte, 100)
 			for {
 				n, err := templateFile.Read(buf)
 
 				if err != nil && err != io.EOF {
-					return errors.Wrapf(err, "fail to read from %s", templateFile.Path())
+					fmt.Println("err: ", err.Error())
+					return errors.Wrapf(err, "fail to read from template %s", templateFile.Path())
 				}
 				if n == 0 {
 					break

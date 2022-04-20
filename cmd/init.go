@@ -1,9 +1,12 @@
 package cmd
 
 import (
-	"dp/commands/initializer"
+	"fmt"
 	"log"
 	"os"
+
+	"dp/commands/initializer"
+	"dp/pkg"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -20,7 +23,13 @@ var initCmd = &cobra.Command{
 		}
 
 		if err := initializer.Initialize(path); err != nil {
-			log.Fatalln("fail to init", err)
+			if err, ok := err.(pkg.StackTracer); ok {
+				for _, f := range err.StackTrace() {
+					fmt.Printf("%+s:%d\n", f, f)
+				}
+			}
+
+			log.Fatalln("fatal error: ", err.Error())
 		}
 	},
 }

@@ -1,21 +1,15 @@
-build: clean
-	pkger && go build -o build/dp main.go
+build:
+	pkger && go build
 
 .PHONY: clean
 
 clean:
-	rm -rf build
+	go clean
 
 install:
-	cp build/dp `go env GOPATH`/bin/
+	cp dp `go env GOPATH`/bin/
 
-linux_amd64:
-	pkger && env GOOS=linux GOARCH=amd64 go build -ldflags "-w" -o build/dp-linux_amd64 main.go
-darwin_amd64:
-	pkger && env GOOS=darwin GOARCH=amd64 go build -ldflags "-w" -o build/dp-darwin_amd64 main.go
-windows_amd64:
-	pkger && env GOOS=windows GOARCH=amd64 go build -ldflags "-w" -o build/dp-windows_amd64.exe main.go
 compress:
-	upx build/dp-*
+	upx dp
 
-release: clean linux_amd64 darwin_amd64 windows_amd64
+release: clean buld

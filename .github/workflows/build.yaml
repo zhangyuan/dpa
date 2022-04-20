@@ -30,5 +30,5 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: binaries
-        path: build/dp-*
-        retention-days: 5
+        path: dp
+        retention-days: 3
