@@ -1,7 +1,7 @@
 version: "0.1"
 
 workflow:
-  - extract_to_s3
+  - extract_to_raw_storage
   - load_to_ods
   - build_dim
   - build_fact
@@ -11,7 +11,7 @@ jobs:
   extract_to_raw_storage:
     description: "extract log from excel to s3"
     type: python
-    entrypoint: raw/extract.py
+    entrypoint: raw/ingestion.py
     args:
       source_path: s3://sourceBucket/source/
       raw_path: s3://rawStorageBucket/raw/
