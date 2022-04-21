@@ -22,12 +22,12 @@ func Initialize(directoryPath string) error {
 		}
 	}
 
-	_ = pkger.Include("/templates")
+	_ = pkger.Include("/template")
 
 	var makeFullPath = func(s string) string {
 		return strings.TrimSuffix(directoryPath, "/") + "/" + strings.TrimPrefix(s, "/")
 	}
-	err := pkger.Walk("/templates", func(fullPath string, info fs.FileInfo, err error) error {
+	err := pkger.Walk("/template", func(fullPath string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return errors.Wrap(err, "err in walk")
 		}
@@ -40,7 +40,7 @@ func Initialize(directoryPath string) error {
 			return nil
 		}
 
-		templatePath := fullPath[len("dp:/templates"):]
+		templatePath := fullPath[len("dp:/template"):]
 
 		targetPath := makeFullPath(templatePath)
 
