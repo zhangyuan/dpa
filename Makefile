@@ -1,5 +1,5 @@
 build:
-	pkger && go build
+	go build
 
 .PHONY: clean
 
