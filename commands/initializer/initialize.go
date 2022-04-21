@@ -31,6 +31,15 @@ func Initialize(directoryPath string) error {
 		if err != nil {
 			return errors.Wrap(err, "err in walk")
 		}
+
+		if strings.Contains(fullPath, "__pycache__") {
+			return nil
+		}
+
+		if strings.HasSuffix(fullPath, ".pyc") {
+			return nil
+		}
+
 		templatePath := fullPath[len("dp:/templates"):]
 
 		targetPath := makeFullPath(templatePath)
