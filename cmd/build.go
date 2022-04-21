@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"dp/pkg"
 	"dp/pkg/build"
+	"dp/pkg/errors"
 	"fmt"
 	"log"
 
@@ -19,7 +19,7 @@ var buildCmd = &cobra.Command{
 		}
 
 		if err := build.Build(path); err != nil {
-			if err, ok := err.(pkg.StackTracer); ok {
+			if err, ok := err.(errors.StackTracer); ok {
 				for _, f := range err.StackTrace() {
 					fmt.Printf("%+s:%d\n", f, f)
 				}
