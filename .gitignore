@@ -6,3 +6,4 @@ code/
 __pycache__
 /dp
 /pkged.go
+venv/
