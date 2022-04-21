@@ -60,5 +60,5 @@ func mkdirp(projectDirectory string) error {
 }
 
 func Initialize(projectDirectory string) error {
-	return createFiles("assets", projectDirectory)
+	return createFiles("init", projectDirectory)
 }

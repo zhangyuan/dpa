@@ -16,6 +16,6 @@ e2e: install
 	(mkdir /tmp/e2e && cd /tmp/e2e && dp init)
 
 embed-files:
-	(cd template && find assets -type f -not -path "*.pyc" -not -path "*__pycache__*"  -not -path "*/venv/*")
+	(cd template && find init -type f -not -path "*.pyc" -not -path "*__pycache__*"  -not -path "*/venv/*")
 
 release: clean build compress
