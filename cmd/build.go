@@ -1,26 +1,24 @@
 package cmd
 
 import (
+	"dp/pkg"
+	"dp/pkg/build"
 	"fmt"
 	"log"
-
-	"dp/commands/initializer"
-	"dp/pkg"
 
 	"github.com/spf13/cobra"
 )
 
-var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Init the project",
-	Args:  cobra.MaximumNArgs(1),
+// buildCmd represents the build command
+var buildCmd = &cobra.Command{
+	Use: "build",
 	Run: func(cmd *cobra.Command, args []string) {
 		path, err := getWorkingDirectory(args)
 		if err != nil {
 			log.Fatalln("invalid directory", err)
 		}
 
-		if err := initializer.Initialize(path); err != nil {
+		if err := build.Build(path); err != nil {
 			if err, ok := err.(pkg.StackTracer); ok {
 				for _, f := range err.StackTrace() {
 					fmt.Printf("%+s:%d\n", f, f)
@@ -33,5 +31,5 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(buildCmd)
 }
