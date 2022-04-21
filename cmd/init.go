@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"dp/commands/initializer"
-	"dp/pkg"
+	"dp/pkg/errors"
+	"dp/pkg/initializer"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ var initCmd = &cobra.Command{
 		}
 
 		if err := initializer.Initialize(path); err != nil {
-			if err, ok := err.(pkg.StackTracer); ok {
+			if err, ok := err.(errors.StackTracer); ok {
 				for _, f := range err.StackTrace() {
 					fmt.Printf("%+s:%d\n", f, f)
 				}
