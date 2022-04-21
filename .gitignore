@@ -1,7 +1,9 @@
-/dp
-pkged.go
-/.vscode/
+.pyc
+__pycache__
+code/
 /build/
 /workflows/
 .pyc
 __pycache__
+/dp
+/pkged.go
