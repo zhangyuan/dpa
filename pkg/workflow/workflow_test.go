@@ -8,7 +8,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	yamlFileContent, _ := ioutil.ReadFile("workflow-0.1.yaml")
+	yamlFileContent, _ := ioutil.ReadFile("example-0.1.yaml")
 	workflow, err := Parse(yamlFileContent)
 
 	assert.Nil(t, err)

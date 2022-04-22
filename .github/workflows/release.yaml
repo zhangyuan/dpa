@@ -19,10 +19,7 @@ jobs:
       uses: golangci/golangci-lint-action@v2
       with:
         version: v1.45
-    - run: go mod download
-    - run: make build
-    - run: make e2e
-    - run: make release
+    - run: make build-ci
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
