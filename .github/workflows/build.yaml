@@ -22,10 +22,7 @@ jobs:
       uses: golangci/golangci-lint-action@v2
       with:
         version: v1.45
-    - run: go mod download
-    - run: make build
-    - run: make e2e
-    - run: make release
+    - run: make build-ci
     - uses: actions/upload-artifact@v3
       with:
         name: binaries

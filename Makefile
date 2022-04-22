@@ -1,8 +1,16 @@
 build:
 	go build
 
+build-ci: clean install-dependencies build ut e2e compress
+
 lint:
 	golangci-lint run
+
+ut:
+	gotest -v ./...
+
+install-dependencies:
+	go install github.com/rakyll/gotest && go mod download
 
 .PHONY: clean
 
@@ -20,5 +28,3 @@ e2e: install
 
 embed-files:
 	(cd template && find init -type f -not -path "*.pyc" -not -path "*__pycache__*"  -not -path "*/venv/*")
-
-release: clean build compress
