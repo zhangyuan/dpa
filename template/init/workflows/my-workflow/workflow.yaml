@@ -1,10 +1,17 @@
 version: "0.1"
 
+name: my-workflow
+schedule:
+  cron: "00 20 * * ? *"
+tags:
+  team: "fantastic-team"
+
 workflow:
   - extract_to_raw_storage
   - load_to_ods
   - build_dim
-  - build_fact
+  - build_fact:
+      allow_failure: true
   - build_dm
 
 jobs:
@@ -15,6 +22,10 @@ jobs:
     args:
       source_path: s3://sourceBucket/source/
       raw_path: s3://rawStorageBucket/raw/
+    tags:
+      team: "fantastic-team"
+      region: "us-west-1"
+
   
   load_to_ods:
     description: "load log to ods"
