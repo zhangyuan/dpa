@@ -1,6 +1,9 @@
 build:
 	go build
 
+lint:
+	golangci-lint run
+
 .PHONY: clean
 
 clean:
