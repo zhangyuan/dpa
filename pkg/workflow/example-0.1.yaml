@@ -7,12 +7,9 @@ tags:
   team: "fantastic-team"
 
 workflow:
-  - extract_to_raw_storage
-  - load_to_ods
-  - build_dim
-  - build_fact:
+  - ingestion
+  - transform:
       allow_failure: true
-  - build_dm
 
 jobs:
   ingestion:
@@ -27,6 +24,6 @@ jobs:
       region: "us-west-1"
 
   transform:
-    description: "load log to ods"
+    description: "transform and load"
     type: glue-sql
-    entrypoint: ods/ods.sql
+    entrypoint: transformations/transform.sql

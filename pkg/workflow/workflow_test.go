@@ -13,15 +13,21 @@ func TestParse(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, &Workflow{
+	expected := &Workflow{
 		Version: "0.1",
 		Name:    "my-workflow",
 		Jobs: Jobs{Job{
 			Name:        "ingestion",
 			Description: "extract log from excel to s3",
+			Entrypoint:  "raw/ingestion.py",
+			Type:        Python,
 		}, Job{
 			Name:        "transform",
-			Description: "load log to ods",
+			Description: "transform and load",
+			Entrypoint:  "transformations/transform.sql",
+			Type:        GlueSQL,
 		}},
-	}, workflow)
+	}
+
+	assert.Equal(t, expected, workflow)
 }
