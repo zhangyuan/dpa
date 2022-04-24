@@ -5,10 +5,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type JobType int64
+
+const (
+	Unknown JobType = iota
+	Python
+	GlueSQL
+)
+
 type Job struct {
 	Name        string
 	Description string
-	Type        string
+	Type        JobType
 	Entrypoint  string
 	args        map[string]string
 	tags        map[string]string
@@ -30,6 +38,8 @@ func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			job := Job{
 				Name:        jobName,
 				Description: properties["description"].(string),
+				Type:        AsJobType(properties["type"].(string)),
+				Entrypoint:  properties["entrypoint"].(string),
 			}
 			*e = append(*e, job)
 		}
@@ -37,6 +47,17 @@ func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	return nil
 
+}
+
+func AsJobType(jobTypeString string) JobType {
+	switch jobTypeString {
+	case "python":
+		return Python
+	case "glue-sql":
+		return GlueSQL
+	default:
+		return Unknown
+	}
 }
 
 func Parse(content []byte) (*Workflow, error) {
