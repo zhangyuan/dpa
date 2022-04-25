@@ -21,11 +21,25 @@ func TestParse(t *testing.T) {
 			Description: "extract log from excel to s3",
 			Entrypoint:  "raw/ingestion.py",
 			Type:        Python,
+			Arguments: Arguments{
+				{Name: "source_path", Value: "s3://sourceBucket/source/"},
+				{Name: "raw_path", Value: "s3://rawStorageBucket/raw/"},
+				{Name: "schema", Value: map[interface{}]interface{}{
+					"id":          "int",
+					"description": "string",
+				}},
+			},
+			Tags: Tags{
+				{Name: "team", Value: "fantastic-team"},
+				{Name: "region", Value: "us-west-1"},
+			},
 		}, Job{
 			Name:        "transform",
 			Description: "transform and load",
 			Entrypoint:  "transformations/transform.sql",
 			Type:        GlueSQL,
+			Arguments:   Arguments{},
+			Tags:        Tags{},
 		}},
 	}
 
