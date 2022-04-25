@@ -27,6 +27,10 @@ type Tag struct {
 
 type Tags []Tag
 
+type Schedule struct {
+	Cron string
+}
+
 type Job struct {
 	Name        string
 	Description string
@@ -39,10 +43,11 @@ type Job struct {
 type Jobs []Job
 
 type Workflow struct {
-	Version string
-	Name    string
-	Jobs    Jobs `yaml:"jobs"`
-	Tags    Tags
+	Version  string
+	Name     string
+	Tags     Tags
+	Schedule Schedule
+	Jobs     Jobs `yaml:"jobs"`
 }
 
 func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
