@@ -16,6 +16,9 @@ func TestParse(t *testing.T) {
 	expected := &Workflow{
 		Version: "0.1",
 		Name:    "my-workflow",
+		Schedule: Schedule{
+			Cron: "00 20 * * ? *",
+		},
 		Tags: Tags{
 			Tag{Name: "lob", Value: "sales"},
 		},
