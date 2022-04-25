@@ -42,6 +42,7 @@ type Workflow struct {
 	Version string
 	Name    string
 	Jobs    Jobs `yaml:"jobs"`
+	Tags    Tags
 }
 
 func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -69,6 +70,22 @@ func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			}
 			*e = append(*e, job)
 		}
+	} else {
+		return errors.Wrap(err, "fail to unmarshal Jobs")
+	}
+
+	return nil
+}
+
+func (tags *Tags) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var tagsMap map[string]string
+
+	if err := unmarshal(&tagsMap); err == nil {
+		for name, value := range tagsMap {
+			*tags = append(*tags, Tag{Name: name, Value: value})
+		}
+	} else {
+		return errors.Wrap(err, "fail to unmarshal Tags")
 	}
 
 	return nil
@@ -103,7 +120,6 @@ func AsTags(tagsInterface interface{}) *Tags {
 	tags := Tags{}
 	argumementsList := tagsInterface.(map[interface{}]interface{})
 	for nameInterface, value := range argumementsList {
-		// name := nameInterface.(string)
 		tags = append(tags, Tag{Name: nameInterface.(string), Value: value.(string)})
 	}
 	return &tags

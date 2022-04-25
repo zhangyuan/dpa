@@ -4,7 +4,7 @@ name: my-workflow
 schedule:
   cron: "00 20 * * ? *"
 tags:
-  team: "fantastic-team"
+  lob: "sales"
 
 workflow:
   - ingestion
