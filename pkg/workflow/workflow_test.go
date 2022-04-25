@@ -16,6 +16,9 @@ func TestParse(t *testing.T) {
 	expected := &Workflow{
 		Version: "0.1",
 		Name:    "my-workflow",
+		Tags: Tags{
+			Tag{Name: "lob", Value: "sales"},
+		},
 		Jobs: Jobs{Job{
 			Name:        "ingestion",
 			Description: "extract log from excel to s3",
