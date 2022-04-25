@@ -13,13 +13,27 @@ const (
 	GlueSQL
 )
 
+type Argument struct {
+	Name  string
+	Value interface{}
+}
+
+type Arguments []Argument
+
+type Tag struct {
+	Name  string
+	Value string
+}
+
+type Tags []Tag
+
 type Job struct {
 	Name        string
 	Description string
 	Type        JobType
 	Entrypoint  string
-	args        map[string]string
-	tags        map[string]string
+	Arguments   Arguments
+	Tags        Tags
 }
 
 type Jobs []Job
@@ -35,22 +49,37 @@ func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if err := unmarshal(&jobsMap); err == nil {
 		for jobName, properties := range jobsMap {
+			arguments := Arguments{}
+			if properties["args"] != nil {
+				arguments = *AsArguments(properties["args"])
+			}
+
+			tags := Tags{}
+			if properties["tags"] != nil {
+				tags = *AsTags(properties["tags"])
+			}
+
 			job := Job{
 				Name:        jobName,
-				Description: properties["description"].(string),
+				Description: AsDescription(properties["description"]),
 				Type:        AsJobType(properties["type"].(string)),
 				Entrypoint:  properties["entrypoint"].(string),
+				Arguments:   arguments,
+				Tags:        tags,
 			}
 			*e = append(*e, job)
 		}
 	}
 
 	return nil
-
 }
 
-func AsJobType(jobTypeString string) JobType {
-	switch jobTypeString {
+func AsDescription(descriptionInterface interface{}) string {
+	return descriptionInterface.(string)
+}
+
+func AsJobType(jobTypeInterface interface{}) JobType {
+	switch jobTypeInterface {
 	case "python":
 		return Python
 	case "glue-sql":
@@ -58,6 +87,26 @@ func AsJobType(jobTypeString string) JobType {
 	default:
 		return Unknown
 	}
+}
+
+func AsArguments(argumentsInterface interface{}) *Arguments {
+	arguments := Arguments{}
+	argumementsList := argumentsInterface.(map[interface{}]interface{})
+	for nameInterface, value := range argumementsList {
+		name := nameInterface.(string)
+		arguments = append(arguments, Argument{Name: name, Value: value})
+	}
+	return &arguments
+}
+
+func AsTags(tagsInterface interface{}) *Tags {
+	tags := Tags{}
+	argumementsList := tagsInterface.(map[interface{}]interface{})
+	for nameInterface, value := range argumementsList {
+		// name := nameInterface.(string)
+		tags = append(tags, Tag{Name: nameInterface.(string), Value: value.(string)})
+	}
+	return &tags
 }
 
 func Parse(content []byte) (*Workflow, error) {

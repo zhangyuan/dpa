@@ -19,6 +19,9 @@ jobs:
     args:
       source_path: s3://sourceBucket/source/
       raw_path: s3://rawStorageBucket/raw/
+      schema:
+        id: "int"
+        description: "string"
     tags:
       team: "fantastic-team"
       region: "us-west-1"

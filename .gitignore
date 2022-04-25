@@ -7,3 +7,4 @@ __pycache__
 /dp
 /pkged.go
 venv/
+__debug_bin
