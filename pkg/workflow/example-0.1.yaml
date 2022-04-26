@@ -6,10 +6,10 @@ schedule:
 tags:
   lob: "sales"
 
-workflow:
+steps:
   - ingestion
-  - transform:
-      allow_failure: true
+  - job: transformation
+    allow_failure: true
 
 jobs:
   ingestion:
@@ -26,7 +26,13 @@ jobs:
       team: "fantastic-team"
       region: "us-west-1"
 
-  transform:
+  transformation:
     description: "transform and load"
     type: glue-sql
     entrypoint: transformations/transform.sql
+    args:
+      years: [2021, 2022]
+
+  notification:
+    description: "dummy job"
+    type: dummy

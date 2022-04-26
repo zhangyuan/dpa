@@ -22,31 +22,42 @@ func TestParse(t *testing.T) {
 		Tags: Tags{
 			Tag{Name: "lob", Value: "sales"},
 		},
-		Jobs: Jobs{Job{
-			Name:        "ingestion",
-			Description: "extract log from excel to s3",
-			Entrypoint:  "raw/ingestion.py",
-			Type:        Python,
-			Arguments: Arguments{
-				{Name: "raw_path", Value: "s3://rawStorageBucket/raw/"},
-				{Name: "schema", Value: map[interface{}]interface{}{
-					"id":          "int",
-					"description": "string",
-				}},
-				{Name: "source_path", Value: "s3://sourceBucket/source/"},
-			},
-			Tags: Tags{
-				{Name: "team", Value: "fantastic-team"},
-				{Name: "region", Value: "us-west-1"},
-			},
-		}, Job{
-			Name:        "transform",
-			Description: "transform and load",
-			Entrypoint:  "transformations/transform.sql",
-			Type:        GlueSQL,
-			Arguments:   nil,
-			Tags:        nil,
-		}},
+		Steps: Steps{
+			Step{Job: "ingestion", AllowFailure: false},
+			Step{Job: "transformation", AllowFailure: true},
+		},
+		Jobs: Jobs{
+			Job{
+				Name:        "ingestion",
+				Description: "extract log from excel to s3",
+				Entrypoint:  "raw/ingestion.py",
+				Type:        Python,
+				Arguments: Arguments{
+					{Name: "raw_path", Value: "s3://rawStorageBucket/raw/"},
+					{Name: "schema", Value: map[interface{}]interface{}{
+						"id":          "int",
+						"description": "string",
+					}},
+					{Name: "source_path", Value: "s3://sourceBucket/source/"},
+				},
+				Tags: Tags{
+					{Name: "team", Value: "fantastic-team"},
+					{Name: "region", Value: "us-west-1"},
+				},
+			}, Job{
+				Name:        "notification",
+				Description: "dummy job",
+				Type:        Dummy,
+			}, Job{
+				Name:        "transformation",
+				Description: "transform and load",
+				Entrypoint:  "transformations/transform.sql",
+				Arguments: Arguments{
+					{Name: "years", Value: []interface{}{2021, 2022}},
+				},
+				Type: GlueSQL,
+				Tags: nil,
+			}},
 	}
 
 	assert.Equal(t, expected, workflow)
