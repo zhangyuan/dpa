@@ -33,12 +33,12 @@ func TestParse(t *testing.T) {
 				Entrypoint:  "raw/ingestion.py",
 				Type:        Python,
 				Arguments: Arguments{
+					{Name: "source_path", Value: "s3://sourceBucket/source/"},
 					{Name: "raw_path", Value: "s3://rawStorageBucket/raw/"},
 					{Name: "schema", Value: map[interface{}]interface{}{
 						"id":          "int",
 						"description": "string",
 					}},
-					{Name: "source_path", Value: "s3://sourceBucket/source/"},
 				},
 				Tags: Tags{
 					{Name: "team", Value: "fantastic-team"},

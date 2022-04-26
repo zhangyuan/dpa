@@ -96,11 +96,11 @@ func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (tags *Tags) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var tagsMap map[string]string
+	var tagsMap yaml.MapSlice
 
 	if err := unmarshal(&tagsMap); err == nil {
-		for name, value := range tagsMap {
-			*tags = append(*tags, Tag{Name: name, Value: value})
+		for _, value := range tagsMap {
+			*tags = append(*tags, Tag{Name: value.Key.(string), Value: value.Value.(string)})
 		}
 	} else {
 		return errors.Wrap(err, "fail to unmarshal Tags")
@@ -134,6 +134,9 @@ func (step *Step) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (arguments *Arguments) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var argumentsMap map[string]interface{}
+
+	var argumentsMapSlice map[string]yaml.MapSlice
+
 	if err := unmarshal(&argumentsMap); err == nil {
 		if len(argumentsMap) == 0 {
 			*arguments = Arguments{}
@@ -149,8 +152,15 @@ func (arguments *Arguments) UnmarshalYAML(unmarshal func(interface{}) error) err
 		return errors.Wrap(err, "fail to unmarshal Arguments")
 	}
 
+	var argumentNames []string
+	for name := range argumentsMapSlice {
+		argumentNames = append(argumentNames, name)
+	}
+
+	indexOf := helpers.IndexOf(argumentNames)
+
 	sort.SliceStable(*arguments, func(i, j int) bool {
-		return (*arguments)[i].Name < (*arguments)[j].Name
+		return indexOf((*arguments)[i].Name) < indexOf((*arguments)[j].Name)
 	})
 
 	return nil
