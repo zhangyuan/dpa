@@ -1,13 +1,17 @@
 build:
 	go build
 
-build-ci: clean install-dependencies build ut e2e compress
+build-ci: clean install-dependencies build coverage e2e compress
 
 lint:
 	golangci-lint run
 
 ut:
 	gotest -v ./...
+
+coverage:
+	gotest ./... -v -coverpkg=./... -coverprofile=cover.out  -p 1 ./...
+	go tool cover -func=cover.out    
 
 install-dependencies:
 	go install github.com/rakyll/gotest && go mod download
