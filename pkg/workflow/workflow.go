@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"sort"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -50,7 +52,7 @@ type Workflow struct {
 	Jobs     Jobs `yaml:"jobs"`
 }
 
-func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var jobsMap map[string]map[string]interface{}
 
 	if err := unmarshal(&jobsMap); err == nil {
@@ -73,11 +75,15 @@ func (e *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 				Arguments:   arguments,
 				Tags:        tags,
 			}
-			*e = append(*e, job)
+			*jobs = append(*jobs, job)
 		}
 	} else {
 		return errors.Wrap(err, "fail to unmarshal Jobs")
 	}
+
+	sort.SliceStable(*jobs, func(i, j int) bool {
+		return (*jobs)[i].Name < (*jobs)[j].Name
+	})
 
 	return nil
 }
