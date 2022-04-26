@@ -38,7 +38,7 @@ type Job struct {
 	Description string
 	Type        JobType
 	Entrypoint  string
-	Arguments   Arguments
+	Arguments   Arguments `yaml:"args"`
 	Tags        Tags
 }
 
@@ -53,28 +53,12 @@ type Workflow struct {
 }
 
 func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var jobsMap map[string]map[string]interface{}
+	var jobsMap map[string]Job
 
 	if err := unmarshal(&jobsMap); err == nil {
-		for jobName, properties := range jobsMap {
-			arguments := Arguments{}
-			if properties["args"] != nil {
-				arguments = *AsArguments(properties["args"])
-			}
+		for name, job := range jobsMap {
+			job.Name = name
 
-			tags := Tags{}
-			if properties["tags"] != nil {
-				tags = *AsTags(properties["tags"])
-			}
-
-			job := Job{
-				Name:        jobName,
-				Description: AsDescription(properties["description"]),
-				Type:        AsJobType(properties["type"].(string)),
-				Entrypoint:  properties["entrypoint"].(string),
-				Arguments:   arguments,
-				Tags:        tags,
-			}
 			*jobs = append(*jobs, job)
 		}
 	} else {
@@ -102,8 +86,37 @@ func (tags *Tags) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func AsDescription(descriptionInterface interface{}) string {
-	return descriptionInterface.(string)
+func (arguments *Arguments) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var argumentsMap map[string]interface{}
+	if err := unmarshal(&argumentsMap); err == nil {
+		if len(argumentsMap) == 0 {
+			*arguments = Arguments{}
+		} else {
+			for name, value := range argumentsMap {
+				*arguments = append(*arguments, Argument{
+					Name:  name,
+					Value: value,
+				})
+			}
+		}
+	} else {
+		return errors.Wrap(err, "fail to unmarshal Arguments")
+	}
+
+	sort.SliceStable(*arguments, func(i, j int) bool {
+		return (*arguments)[i].Name < (*arguments)[j].Name
+	})
+
+	return nil
+}
+
+func (jobType *JobType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var jobTypeString string
+	if err := unmarshal(&jobTypeString); err != nil {
+		return errors.Wrap(err, "invalid job type")
+	}
+	*jobType = AsJobType(jobTypeString)
+	return nil
 }
 
 func AsJobType(jobTypeInterface interface{}) JobType {
@@ -115,25 +128,6 @@ func AsJobType(jobTypeInterface interface{}) JobType {
 	default:
 		return Unknown
 	}
-}
-
-func AsArguments(argumentsInterface interface{}) *Arguments {
-	arguments := Arguments{}
-	argumementsList := argumentsInterface.(map[interface{}]interface{})
-	for nameInterface, value := range argumementsList {
-		name := nameInterface.(string)
-		arguments = append(arguments, Argument{Name: name, Value: value})
-	}
-	return &arguments
-}
-
-func AsTags(tagsInterface interface{}) *Tags {
-	tags := Tags{}
-	argumementsList := tagsInterface.(map[interface{}]interface{})
-	for nameInterface, value := range argumementsList {
-		tags = append(tags, Tag{Name: nameInterface.(string), Value: value.(string)})
-	}
-	return &tags
 }
 
 func Parse(content []byte) (*Workflow, error) {
