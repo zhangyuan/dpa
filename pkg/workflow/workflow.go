@@ -58,12 +58,12 @@ type Workflow struct {
 	Name     string
 	Tags     Tags
 	Schedule Schedule
-	Jobs     Jobs `yaml:"jobs"`
+	Jobs     Jobs
 	Steps    Steps
 }
 
 func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var jobsMapSlice map[string]yaml.MapSlice
+	var jobsMapSlice yaml.MapSlice
 
 	if err := unmarshal(&jobsMapSlice); err != nil {
 		return errors.Wrap(err, "fail to unmarshal jobs")
@@ -82,8 +82,8 @@ func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	var sortedJobNames []string
-	for name := range jobsMapSlice {
-		sortedJobNames = append(sortedJobNames, name)
+	for _, item := range jobsMapSlice {
+		sortedJobNames = append(sortedJobNames, item.Key.(string))
 	}
 
 	var indexOf = helpers.IndexOf(sortedJobNames)
