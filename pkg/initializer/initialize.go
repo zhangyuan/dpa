@@ -60,5 +60,5 @@ func mkdirp(projectDirectory string) error {
 }
 
 func Initialize(projectDirectory string) error {
-	return createFiles("init", projectDirectory)
+	return createFiles("lakeformation", projectDirectory)
 }

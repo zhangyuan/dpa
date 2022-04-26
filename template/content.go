@@ -2,15 +2,15 @@ package template
 
 import "embed"
 
-//go:embed init/workflows/my-workflow/ods/ods.sql
-//go:embed init/workflows/my-workflow/workflow.yaml
-//go:embed init/workflows/my-workflow/dm/dm.sql
-//go:embed init/workflows/my-workflow/dw/dim.sql
-//go:embed init/workflows/my-workflow/dw/fact.sql
-//go:embed init/workflows/my-workflow/raw/ingestion.py
-//go:embed init/requirements-glue.txt
-//go:embed init/.gitignore
-//go:embed init/vendor/__init__.py
-//go:embed init/vendor/helper.py
+//go:embed lakeformation/workflows/my-workflow/ods/ods.sql
+//go:embed lakeformation/workflows/my-workflow/workflow.yaml
+//go:embed lakeformation/workflows/my-workflow/dm/dm.sql
+//go:embed lakeformation/workflows/my-workflow/dw/dim.sql
+//go:embed lakeformation/workflows/my-workflow/dw/fact.sql
+//go:embed lakeformation/workflows/my-workflow/raw/ingestion.py
+//go:embed lakeformation/requirements-glue.txt
+//go:embed lakeformation/.gitignore
+//go:embed lakeformation/vendor/__init__.py
+//go:embed lakeformation/vendor/helper.py
 
 var Content embed.FS
