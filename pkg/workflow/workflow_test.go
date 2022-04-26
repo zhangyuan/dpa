@@ -45,10 +45,6 @@ func TestParse(t *testing.T) {
 					{Name: "region", Value: "us-west-1"},
 				},
 			}, Job{
-				Name:        "notification",
-				Description: "dummy job",
-				Type:        Dummy,
-			}, Job{
 				Name:        "transformation",
 				Description: "transform and load",
 				Entrypoint:  "transformations/transform.sql",
@@ -57,6 +53,10 @@ func TestParse(t *testing.T) {
 				},
 				Type: GlueSQL,
 				Tags: nil,
+			}, Job{
+				Name:        "notification",
+				Description: "dummy job",
+				Type:        Dummy,
 			}},
 	}
 
