@@ -3,6 +3,8 @@ package workflow
 import (
 	"sort"
 
+	"dp/pkg/helpers"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -61,6 +63,12 @@ type Workflow struct {
 }
 
 func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var jobsMapSlice map[string]yaml.MapSlice
+
+	if err := unmarshal(&jobsMapSlice); err != nil {
+		return errors.Wrap(err, "fail to unmarshal jobs")
+	}
+
 	var jobsMap map[string]Job
 
 	if err := unmarshal(&jobsMap); err == nil {
@@ -73,8 +81,15 @@ func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return errors.Wrap(err, "fail to unmarshal Jobs")
 	}
 
+	var sortedJobNames []string
+	for name := range jobsMapSlice {
+		sortedJobNames = append(sortedJobNames, name)
+	}
+
+	var indexOf = helpers.IndexOf(sortedJobNames)
+
 	sort.SliceStable(*jobs, func(i, j int) bool {
-		return (*jobs)[i].Name < (*jobs)[j].Name
+		return indexOf((*jobs)[i].Name) < indexOf((*jobs)[j].Name)
 	})
 
 	return nil
@@ -94,7 +109,7 @@ func (tags *Tags) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-type StepDefinition struct {
+type stepDefinition struct {
 	Job          string
 	AllowFailure bool `yaml:"allow_failure"`
 }
@@ -107,7 +122,7 @@ func (step *Step) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return nil
 	}
 
-	var stepDefinition StepDefinition
+	var stepDefinition stepDefinition
 
 	if err := unmarshal(&stepDefinition); err == nil {
 		*step = Step{Job: stepDefinition.Job, AllowFailure: stepDefinition.AllowFailure}
@@ -146,11 +161,11 @@ func (jobType *JobType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&jobTypeString); err != nil {
 		return errors.Wrap(err, "invalid job type")
 	}
-	*jobType = AsJobType(jobTypeString)
+	*jobType = asJobType(jobTypeString)
 	return nil
 }
 
-func AsJobType(jobTypeInterface interface{}) JobType {
+func asJobType(jobTypeInterface interface{}) JobType {
 	switch jobTypeInterface {
 	case "python":
 		return Python
