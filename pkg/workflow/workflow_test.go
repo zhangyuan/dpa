@@ -22,10 +22,6 @@ func TestParse(t *testing.T) {
 		Tags: Tags{
 			Tag{Name: "lob", Value: "sales"},
 		},
-		Steps: Steps{
-			Step{Job: "ingestion", AllowFailure: false},
-			Step{Job: "transformation", AllowFailure: true},
-		},
 		Jobs: Jobs{
 			Job{
 				Name:        "ingestion",
@@ -53,10 +49,16 @@ func TestParse(t *testing.T) {
 				},
 				Type: GlueSQL,
 				Tags: nil,
+				Requires: JobRequires{
+					JobCondition{JobName: "ingestion"},
+				},
 			}, Job{
 				Name:        "notification",
 				Description: "dummy job",
 				Type:        Dummy,
+				Requires: JobRequires{
+					JobCondition{JobName: "transformation"},
+				},
 			}},
 	}
 
