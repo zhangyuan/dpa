@@ -6,11 +6,6 @@ schedule:
 tags:
   lob: "sales"
 
-steps:
-  - ingestion
-  - job: transformation
-    allow_failure: true
-
 jobs:
   ingestion:
     description: "extract log from excel to s3"
@@ -32,7 +27,10 @@ jobs:
     entrypoint: transformations/transform.sql
     args:
       years: [2021, 2022]
-
+    requires:
+      - job_name: ingestion
   notification:
     description: "dummy job"
     type: dummy
+    requires:
+      - job_name: transformation

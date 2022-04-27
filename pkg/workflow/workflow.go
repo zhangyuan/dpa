@@ -43,23 +43,22 @@ type Job struct {
 	Entrypoint  string
 	Arguments   Arguments `yaml:"args"`
 	Tags        Tags
+	Requires    JobRequires
 }
 
 type Jobs []Job
 
-type Step struct {
-	Job          string
-	AllowFailure bool
+type JobCondition struct {
+	JobName string `yaml:"job_name"`
 }
 
-type Steps []Step
+type JobRequires []JobCondition
 type Workflow struct {
 	Version  string
 	Name     string
 	Tags     Tags
 	Schedule Schedule
 	Jobs     Jobs
-	Steps    Steps
 }
 
 func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -113,29 +112,6 @@ func (tags *Tags) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
-}
-
-type stepDefinition struct {
-	Job          string
-	AllowFailure bool `yaml:"allow_failure"`
-}
-
-func (step *Step) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var jobName string
-
-	if err := unmarshal(&jobName); err == nil {
-		*step = Step{Job: jobName, AllowFailure: false}
-		return nil
-	}
-
-	var stepDefinition stepDefinition
-
-	if err := unmarshal(&stepDefinition); err == nil {
-		*step = Step{Job: stepDefinition.Job, AllowFailure: stepDefinition.AllowFailure}
-		return nil
-	}
-
-	return errors.New("could not unmarshal step")
 }
 
 func (arguments *Arguments) UnmarshalYAML(unmarshal func(interface{}) error) error {
