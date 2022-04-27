@@ -81,10 +81,7 @@ func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return errors.Wrap(err, "fail to unmarshal jobs")
 	}
 
-	var sortedJobNames []string
-	for _, item := range jobsMapSlice {
-		sortedJobNames = append(sortedJobNames, item.Key.(string))
-	}
+	sortedJobNames := extractMapSliceStringKeys(&jobsMapSlice)
 
 	var indexOf = helpers.IndexOf(sortedJobNames)
 
@@ -93,6 +90,15 @@ func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	})
 
 	return nil
+}
+
+func extractMapSliceStringKeys(mapSlice *yaml.MapSlice) []string {
+	var keys []string
+	for _, item := range *mapSlice {
+		keys = append(keys, item.Key.(string))
+	}
+
+	return keys
 }
 
 func (tags *Tags) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -153,10 +159,7 @@ func (arguments *Arguments) UnmarshalYAML(unmarshal func(interface{}) error) err
 	if err := unmarshal(&argumentsMapSlice); err != nil {
 		return errors.Wrap(err, "fail to unmarshal arguments")
 	}
-	var argumentNames []string
-	for _, item := range argumentsMapSlice {
-		argumentNames = append(argumentNames, item.Key.(string))
-	}
+	argumentNames := extractMapSliceStringKeys(&argumentsMapSlice)
 
 	indexOf := helpers.IndexOf(argumentNames)
 
