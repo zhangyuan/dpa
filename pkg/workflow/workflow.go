@@ -63,12 +63,6 @@ type Workflow struct {
 }
 
 func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var jobsMapSlice yaml.MapSlice
-
-	if err := unmarshal(&jobsMapSlice); err != nil {
-		return errors.Wrap(err, "fail to unmarshal jobs")
-	}
-
 	var jobsMap map[string]Job
 
 	if err := unmarshal(&jobsMap); err == nil {
@@ -79,6 +73,12 @@ func (jobs *Jobs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		}
 	} else {
 		return errors.Wrap(err, "fail to unmarshal Jobs")
+	}
+
+	var jobsMapSlice yaml.MapSlice
+
+	if err := unmarshal(&jobsMapSlice); err != nil {
+		return errors.Wrap(err, "fail to unmarshal jobs")
 	}
 
 	var sortedJobNames []string
@@ -134,9 +134,6 @@ func (step *Step) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (arguments *Arguments) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var argumentsMap map[string]interface{}
-
-	var argumentsMapSlice map[string]yaml.MapSlice
-
 	if err := unmarshal(&argumentsMap); err == nil {
 		if len(argumentsMap) == 0 {
 			*arguments = Arguments{}
@@ -152,9 +149,13 @@ func (arguments *Arguments) UnmarshalYAML(unmarshal func(interface{}) error) err
 		return errors.Wrap(err, "fail to unmarshal Arguments")
 	}
 
+	var argumentsMapSlice yaml.MapSlice
+	if err := unmarshal(&argumentsMapSlice); err != nil {
+		return errors.Wrap(err, "fail to unmarshal arguments")
+	}
 	var argumentNames []string
-	for name := range argumentsMapSlice {
-		argumentNames = append(argumentNames, name)
+	for _, item := range argumentsMapSlice {
+		argumentNames = append(argumentNames, item.Key.(string))
 	}
 
 	indexOf := helpers.IndexOf(argumentNames)
