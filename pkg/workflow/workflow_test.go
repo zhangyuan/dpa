@@ -17,6 +17,9 @@ func TestParseGlueWorkflow(t *testing.T) {
 	expected := &GlueWorkflow{
 		Name:        "my-workflow",
 		Description: "my workflow",
+		Schedule: Schedule{
+			Cron: "00 20 * * ? *",
+		},
 		Jobs: []GlueJob{
 			{
 				Name:        "ingestion",

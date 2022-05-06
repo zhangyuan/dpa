@@ -10,6 +10,7 @@ type GlueWorkflow struct {
 	Name        string
 	Description string
 	Jobs        []GlueJob
+	Schedule    Schedule
 }
 
 type GlueJob struct {
@@ -24,6 +25,10 @@ type GlueJob struct {
 
 type RequiredJob struct {
 	JobName string
+}
+
+type Schedule struct {
+	Cron string
 }
 
 const (
@@ -102,10 +107,22 @@ func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error
 
 		jobs = append(jobs, job)
 	}
+
+	var schedule Schedule
+	if rawWorkflow["schedule"] != nil {
+		rawSchedule := rawWorkflow["schedule"].(map[interface{}]interface{})
+		if rawSchedule["cron"] != nil {
+			schedule = Schedule{
+				Cron: rawSchedule["cron"].(string),
+			}
+		}
+	}
+
 	return &GlueWorkflow{
 		Name:        rawWorkflow["name"].(string),
 		Description: rawWorkflow["description"].(string),
 		Jobs:        jobs,
+		Schedule:    schedule,
 	}, nil
 }
 
