@@ -9,3 +9,4 @@ __pycache__
 venv/
 __debug_bin
 /cover.out
+/.vscode

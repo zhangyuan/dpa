@@ -96,6 +96,12 @@ Resources:
 	assert.Equal(t, strings.TrimLeft(expected, "\n"), rendered)
 }
 
+func TestGetDag(t *testing.T) {
+	workflow := glueWorkflowFixture()
+	err := workflow.Dag()
+	assert.Nil(t, err)
+}
+
 func glueWorkflowFixture() Workflow {
 	workflow := GlueWorkflow{
 		Name:        "my-workflow",
@@ -148,6 +154,9 @@ func glueWorkflowFixture() Workflow {
 				Requires: []RequiredJob{
 					{
 						JobName: "transformation",
+					},
+					{
+						JobName: "ingestion",
 					},
 				},
 				Tags: []Tag{},
