@@ -5,7 +5,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Workflow interface{}
+type Workflow interface {
+	Render() (string, error)
+}
 
 type Tag struct {
 	Name  string
