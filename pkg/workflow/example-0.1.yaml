@@ -1,5 +1,7 @@
 version: "0.1"
 
+vendor: glue
+
 name: my-workflow
 schedule:
   cron: "00 20 * * ? *"
