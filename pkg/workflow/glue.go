@@ -1,11 +1,15 @@
 package workflow
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
+)
 
 type GlueWorkflow struct {
 	Workflow
-	Name string
-	Jobs []GlueJob
+	Name        string
+	Description string
+	Jobs        []GlueJob
 }
 
 type GlueJob struct {
@@ -99,7 +103,34 @@ func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error
 		jobs = append(jobs, job)
 	}
 	return &GlueWorkflow{
-		Name: rawWorkflow["name"].(string),
-		Jobs: jobs,
+		Name:        rawWorkflow["name"].(string),
+		Description: rawWorkflow["description"].(string),
+		Jobs:        jobs,
 	}, nil
+}
+
+func (workflow *GlueWorkflow) Render() (string, error) {
+	stack := map[string]interface{}{}
+	stack["AWSTemplateFormatVersion"] = "2010-09-09"
+	stack["Description"] = workflow.Description
+
+	awsGlueWorkflow := map[string]interface{}{
+		"Type": "AWS::Glue::Workflow",
+		"Properties": map[string]string{
+			"Description": workflow.Description,
+			"Name":        workflow.Name,
+		},
+	}
+
+	resources := map[string]interface{}{
+		workflow.Name: awsGlueWorkflow,
+	}
+	stack["Resources"] = resources
+
+	template, err := yaml.Marshal(&stack)
+	if err != nil {
+		return "", errors.New("fail to marshal to yaml")
+	}
+
+	return string(template), nil
 }

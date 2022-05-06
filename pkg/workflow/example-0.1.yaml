@@ -3,6 +3,7 @@ version: "0.1"
 vendor: glue
 
 name: my-workflow
+description: my workflow
 schedule:
   cron: "00 20 * * ? *"
 tags:
