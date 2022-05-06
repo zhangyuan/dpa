@@ -7,6 +7,11 @@ import (
 
 type Workflow interface{}
 
+type Tag struct {
+	Name  string
+	Value string
+}
+
 func Parse(content []byte) (Workflow, error) {
 	var rawWorkflow map[string]interface{}
 	err := yaml.Unmarshal(content, &rawWorkflow)
