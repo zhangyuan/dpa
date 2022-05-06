@@ -7,14 +7,14 @@ lint:
 	golangci-lint run
 
 ut:
-	gotest -v ./...
+	go test -v ./...
 
 coverage:
-	gotest ./... -v -coverpkg=./... -coverprofile=cover.out  -p 1 ./...
+	go test ./... -v -coverpkg=./... -coverprofile=cover.out  -p 1 ./...
 	go tool cover -func=cover.out    
 
 install-dependencies:
-	go install github.com/rakyll/gotest && go mod download
+	go mod download
 
 .PHONY: clean
 

@@ -7,6 +7,7 @@ import (
 
 type Workflow interface {
 	Render() (string, error)
+	Dag() error
 }
 
 type Tag struct {

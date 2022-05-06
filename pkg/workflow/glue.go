@@ -1,7 +1,11 @@
 package workflow
 
 import (
+	"fmt"
+
+	"github.com/heimdalr/dag"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"gopkg.in/yaml.v2"
 )
 
@@ -150,4 +154,56 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	}
 
 	return string(template), nil
+}
+
+func (workflow *GlueWorkflow) Dag() error {
+	d := dag.NewDAG()
+
+	jobs := &workflow.Jobs
+
+	jobNameToVertex := make(map[string]string)
+
+	for _, job := range *jobs {
+		v1, _ := d.AddVertex(job.Name)
+		jobNameToVertex[job.Name] = v1
+	}
+
+	jobNames := lo.Map(workflow.Jobs, func(t GlueJob, i int) string {
+		return t.Name
+	})
+
+	for _, job := range *jobs {
+		for _, requiredJob := range job.Requires {
+			requiredJobName, ok := lo.Find(jobNames, func(jobName string) bool {
+				return requiredJob.JobName == jobName
+			})
+			if !ok {
+				return errors.Errorf("invalid job name %s", requiredJob.JobName)
+			}
+
+			_ = d.AddEdge(jobNameToVertex[requiredJobName], jobNameToVertex[job.Name])
+		}
+	}
+
+	fmt.Println(d.String())
+	fmt.Println("")
+
+	for id, jobName := range d.GetVertices() {
+		fmt.Println("jobName: ", jobName)
+		children, _ := d.GetChildren(id)
+
+		for _, child := range children {
+			fmt.Println("child:", child)
+		}
+
+		ancestors, _ := d.GetAncestors(id)
+		for _, a := range ancestors {
+			fmt.Println("ancestor:", a)
+		}
+
+		fmt.Println("")
+		fmt.Println("")
+	}
+
+	return nil
 }
