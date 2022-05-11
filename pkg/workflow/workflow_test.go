@@ -89,42 +89,8 @@ func TestRenderGlueWorkflow(t *testing.T) {
 	rendered, err := workflow.Render()
 	assert.Nil(t, err)
 
-	expected := `
-AWSTemplateFormatVersion: "2010-09-09"
-Description: my workflow
-Resources:
-  my-workflow:
-    Properties:
-      Description: my workflow
-      Name: my-workflow
-    Type: AWS::Glue::Workflow
-  notificationTrigger:
-    Type: AWS::Glue::Trigger
-    Properties:
-      Description: trigger notification
-      Predicate:
-        Conditions:
-        - JobName: transformation
-          LogicalOperator: EQUALS
-          State: SUCCEEDED
-        - JobName: ingestion
-          LogicalOperator: EQUALS
-          State: SUCCEEDED
-  transformationTrigger:
-    Type: AWS::Glue::Trigger
-    Properties:
-      Description: trigger transformation
-      Predicate:
-        Conditions:
-        - JobName: ingestion
-          LogicalOperator: EQUALS
-          State: SUCCEEDED
-  ingestionTrigger:
-    Type: AWS::Glue::Trigger
-    Properties:
-      Description: "trigger ingestion"    
-`
-	expectedData, expectedJsonErr := yaml2Json(expected)
+	expectedYaml, _ := ioutil.ReadFile("example-glue.yaml")
+	expectedData, expectedJsonErr := yaml2Json(string(expectedYaml))
 	assert.Nil(t, expectedJsonErr)
 
 	renderedJson, renderedJsonErr := yaml2Json(rendered)
