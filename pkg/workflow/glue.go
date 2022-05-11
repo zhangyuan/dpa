@@ -146,6 +146,34 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	resources := map[string]interface{}{
 		workflow.Name: awsGlueWorkflow,
 	}
+
+	for _, job := range workflow.Jobs {
+		conditions := lo.Map(job.Requires, func(rj RequiredJob, i int) map[string]interface{} {
+			return map[string]interface{}{
+				"JobName":         rj.JobName,
+				"LogicalOperator": "EQUALS",
+				"State":           "SUCCEEDED",
+			}
+		})
+
+		properties := map[string]interface{}{
+			"Description": fmt.Sprintf("trigger %s", job.Name),
+		}
+
+		if len(conditions) > 0 {
+			properties["Predicate"] = map[string]interface{}{
+				"Conditions": conditions,
+			}
+		}
+		trigger := map[string]interface{}{
+			"Type":       "AWS::Glue::Trigger",
+			"Properties": properties,
+		}
+
+		triggerName := fmt.Sprintf("%sTrigger", job.Name)
+		resources[triggerName] = trigger
+	}
+
 	stack["Resources"] = resources
 
 	template, err := yaml.Marshal(&stack)
@@ -185,8 +213,30 @@ func (workflow *GlueWorkflow) Dag() error {
 		}
 	}
 
-	fmt.Println(d.String())
-	fmt.Println("")
+	// var walk func(d *dag.DAG, id string) error
+
+	// walk = func(d *dag.DAG, id string) error {
+	// 	jobName, err := d.GetVertex(id)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if children, err := d.GetChildren(id); err != nil {
+	// 		return err
+	// 	} else {
+	// 		for childId, childJobName := range children {
+	// 			fmt.Sprintln("%s => %s", jobName, childJobName)
+	// 			if err := walk(d, childId); err != nil {
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// 	return nil
+	// }
+
+	// for id := range d.GetRoots() {
+	// 	walk(d, id)
+	// }
+	// fmt.Println("")
 
 	for id, jobName := range d.GetVertices() {
 		fmt.Println("jobName: ", jobName)
