@@ -1,12 +1,17 @@
 package workflow
 
 import (
+	"fmt"
 	"io/ioutil"
-	"strings"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func TestParseGlueWorkflow(t *testing.T) {
 	yamlFileContent, _ := ioutil.ReadFile("example-0.1.yaml")
@@ -80,6 +85,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 
 func TestRenderGlueWorkflow(t *testing.T) {
 	workflow := glueWorkflowFixture()
+
 	rendered, err := workflow.Render()
 	assert.Nil(t, err)
 
@@ -92,8 +98,53 @@ Resources:
       Description: my workflow
       Name: my-workflow
     Type: AWS::Glue::Workflow
+  notificationTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Description: trigger notification
+      Predicate:
+        Conditions:
+        - JobName: transformation
+          LogicalOperator: EQUALS
+          State: SUCCEEDED
+        - JobName: ingestion
+          LogicalOperator: EQUALS
+          State: SUCCEEDED
+  transformationTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Description: trigger transformation
+      Predicate:
+        Conditions:
+        - JobName: ingestion
+          LogicalOperator: EQUALS
+          State: SUCCEEDED
+  ingestionTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Description: "trigger ingestion"    
 `
-	assert.Equal(t, strings.TrimLeft(expected, "\n"), rendered)
+	expectedData, expectedJsonErr := yaml2Json(expected)
+	assert.Nil(t, expectedJsonErr)
+
+	renderedJson, renderedJsonErr := yaml2Json(rendered)
+	assert.Nil(t, renderedJsonErr)
+
+	assert.JSONEq(t, expectedData, renderedJson)
+}
+
+func yaml2Json(yamlContent string) (string, error) {
+	var yamlData interface{}
+	if err := yaml.Unmarshal([]byte(yamlContent), &yamlData); err != nil {
+		return "", err
+	}
+
+	if jsonData, err := json.Marshal(yamlData); err != nil {
+		return "", err
+	} else {
+		fmt.Println(string(jsonData))
+		return string(jsonData), nil
+	}
 }
 
 func TestGetDag(t *testing.T) {
