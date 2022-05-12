@@ -1,9 +1,12 @@
 package workflow
 
 import (
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type Workflow interface {
 	Render() (string, error)

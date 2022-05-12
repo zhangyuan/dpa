@@ -177,6 +177,12 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			} else {
 				jobRole = workflow.IamRole
 			}
+			arguments, err := json.Marshal(job.Args)
+			if err != nil {
+				message := fmt.Sprintf("invalid arguments: %v", job.Args)
+				return "", errors.Wrap(err, message)
+			}
+
 			resources[resourceName] = map[string]interface{}{
 				"Type": "AWS::Glue::Job",
 				"Properties": map[string]interface{}{
@@ -185,8 +191,10 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 						"PythonVersion":  "3",
 						"ScriptLocation": job.Entrypoint,
 					},
-					"DefaultArguments": job.Args,
-					"Role":             jobRole,
+					"DefaultArguments": map[string]interface{}{
+						"--arguments": string(arguments),
+					},
+					"Role": jobRole,
 				},
 			}
 		}
@@ -229,6 +237,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	return string(template), nil
 }
 
+// WIP
 func (workflow *GlueWorkflow) Dag() error {
 	d := dag.NewDAG()
 
