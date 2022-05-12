@@ -15,7 +15,7 @@ jobs:
   ingestion:
     description: "extract log from excel to s3"
     type: python
-    entrypoint: raw/ingestion.py
+    entrypoint: ingestion/ingestion.py
     args:
       source_path: s3://sourceBucket/source/
       raw_path: s3://rawStorageBucket/raw/
@@ -28,14 +28,9 @@ jobs:
 
   transformation:
     description: "transform and load"
-    type: glue-sql
-    entrypoint: transformations/transform.sql
+    type: python
+    entrypoint: transformations/transform.py
     args:
       years: [2021, 2022]
     requires:
       - job_name: ingestion
-  notification:
-    description: "dummy job"
-    type: dummy
-    requires:
-      - job_name: transformation

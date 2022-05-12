@@ -12,7 +12,7 @@ Resources:
       Command:
         Name: pythonshell
         PythonVersion: "3"
-        ScriptLocation: raw/ingestion.py
+        ScriptLocation: ingestion/ingestion.py
       DefaultArguments:
         raw_path: "s3://rawStorageBucket/raw/"
         source_path: "s3://sourceBucket/source/"
@@ -21,18 +21,18 @@ Resources:
           id: int
       Role: "iam-role-arn"
 
-  notificationTrigger:
-    Type: AWS::Glue::Trigger
+  Jobtransformation:
+    Type: AWS::Glue::Job
     Properties:
-      Description: trigger notification
-      Predicate:
-        Conditions:
-        - JobName: transformation
-          LogicalOperator: EQUALS
-          State: SUCCEEDED
-        - JobName: ingestion
-          LogicalOperator: EQUALS
-          State: SUCCEEDED
+      Command:
+        Name: pythonshell
+        PythonVersion: "3"
+        ScriptLocation: transformations/transform.py
+      DefaultArguments:
+        years: [2021, 2022]
+
+      Role: "iam-role-arn"
+
   transformationTrigger:
     Type: AWS::Glue::Trigger
     Properties:
