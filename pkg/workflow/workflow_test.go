@@ -25,6 +25,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 		Schedule: Schedule{
 			Cron: "00 20 * * ? *",
 		},
+		IamRole: "iam-role-arn",
 		Jobs: []GlueJob{
 			{
 				Name:        "ingestion",
@@ -39,6 +40,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 						"description": "string",
 					},
 				},
+				Role:     "iam-role-arn",
 				Requires: []RequiredJob{},
 				Tags: []Tag{
 					{
@@ -57,6 +59,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 				Args: map[interface{}]interface{}{
 					"years": []interface{}{2021, 2022},
 				},
+				Role: "iam-role-arn",
 				Requires: []RequiredJob{
 					{
 						JobName: "ingestion",
@@ -68,6 +71,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 				Name:        "notification",
 				Description: "dummy job",
 				Type:        DummyJob,
+				Role:        "iam-role-arn",
 				Entrypoint:  "",
 				Args:        nil,
 				Requires: []RequiredJob{
@@ -123,6 +127,7 @@ func glueWorkflowFixture() Workflow {
 	workflow := GlueWorkflow{
 		Name:        "my-workflow",
 		Description: "my workflow",
+		IamRole:     "iam-role-arn",
 		Jobs: []GlueJob{
 			{
 				Name:        "ingestion",

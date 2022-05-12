@@ -2,10 +2,25 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: my workflow
 Resources:
   my-workflow:
+    Type: AWS::Glue::Workflow
     Properties:
       Description: my workflow
       Name: my-workflow
-    Type: AWS::Glue::Workflow
+  Jobingestion:
+    Type: AWS::Glue::Job
+    Properties:
+      Command:
+        Name: pythonshell
+        PythonVersion: "3"
+        ScriptLocation: raw/ingestion.py
+      DefaultArguments:
+        raw_path: "s3://rawStorageBucket/raw/"
+        source_path: "s3://sourceBucket/source/"
+        schema:
+          description: string
+          id: int
+      Role: "iam-role-arn"
+
   notificationTrigger:
     Type: AWS::Glue::Trigger
     Properties:
