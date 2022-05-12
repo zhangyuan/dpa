@@ -5,13 +5,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 )
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func TestParseGlueWorkflow(t *testing.T) {
 	yamlFileContent, _ := ioutil.ReadFile("example-0.1.yaml")
