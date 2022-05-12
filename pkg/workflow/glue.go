@@ -163,6 +163,10 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	}
 
 	for _, job := range workflow.Jobs {
+		if job.Type != PythonJob {
+			continue
+		}
+
 		resourceName := fmt.Sprintf("Job%s", job.Name)
 		var commandName string
 		if job.Type == PythonJob {

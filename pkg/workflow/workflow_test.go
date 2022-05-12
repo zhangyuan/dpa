@@ -31,7 +31,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 				Name:        "ingestion",
 				Description: "extract log from excel to s3",
 				Type:        PythonJob,
-				Entrypoint:  "raw/ingestion.py",
+				Entrypoint:  "ingestion/ingestion.py",
 				Args: map[interface{}]interface{}{
 					"source_path": "s3://sourceBucket/source/",
 					"raw_path":    "s3://rawStorageBucket/raw/",
@@ -54,8 +54,8 @@ func TestParseGlueWorkflow(t *testing.T) {
 			{
 				Name:        "transformation",
 				Description: "transform and load",
-				Type:        GlueSQLJob,
-				Entrypoint:  "transformations/transform.sql",
+				Type:        PythonJob,
+				Entrypoint:  "transformations/transform.py",
 				Args: map[interface{}]interface{}{
 					"years": []interface{}{2021, 2022},
 				},
@@ -63,20 +63,6 @@ func TestParseGlueWorkflow(t *testing.T) {
 				Requires: []RequiredJob{
 					{
 						JobName: "ingestion",
-					},
-				},
-				Tags: []Tag{},
-			},
-			{
-				Name:        "notification",
-				Description: "dummy job",
-				Type:        DummyJob,
-				Role:        "iam-role-arn",
-				Entrypoint:  "",
-				Args:        nil,
-				Requires: []RequiredJob{
-					{
-						JobName: "transformation",
 					},
 				},
 				Tags: []Tag{},
@@ -133,7 +119,7 @@ func glueWorkflowFixture() Workflow {
 				Name:        "ingestion",
 				Description: "extract log from excel to s3",
 				Type:        PythonJob,
-				Entrypoint:  "raw/ingestion.py",
+				Entrypoint:  "ingestion/ingestion.py",
 				Args: map[interface{}]interface{}{
 					"source_path": "s3://sourceBucket/source/",
 					"raw_path":    "s3://rawStorageBucket/raw/",
@@ -155,28 +141,12 @@ func glueWorkflowFixture() Workflow {
 			{
 				Name:        "transformation",
 				Description: "transform and load",
-				Type:        GlueSQLJob,
-				Entrypoint:  "transformations/transform.sql",
+				Type:        PythonJob,
+				Entrypoint:  "transformations/transform.py",
 				Args: map[interface{}]interface{}{
 					"years": []interface{}{2021, 2022},
 				},
 				Requires: []RequiredJob{
-					{
-						JobName: "ingestion",
-					},
-				},
-				Tags: []Tag{},
-			},
-			{
-				Name:        "notification",
-				Description: "dummy job",
-				Type:        DummyJob,
-				Entrypoint:  "",
-				Args:        nil,
-				Requires: []RequiredJob{
-					{
-						JobName: "transformation",
-					},
 					{
 						JobName: "ingestion",
 					},
