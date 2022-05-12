@@ -15,6 +15,7 @@ type GlueWorkflow struct {
 	Description string
 	Jobs        []GlueJob
 	Schedule    Schedule
+	IamRole     string
 }
 
 type GlueJob struct {
@@ -25,6 +26,7 @@ type GlueJob struct {
 	Args        interface{}
 	Requires    []RequiredJob
 	Tags        []Tag
+	Role        string
 }
 
 type RequiredJob struct {
@@ -56,6 +58,10 @@ func ParseJobType(rawType string) (string, error) {
 
 func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error) {
 	rawJobs := rawWorkflow["jobs"].(map[interface{}]interface{})
+	var iamRole string
+	if rawWorkflow["iam_role"] != nil {
+		iamRole = rawWorkflow["iam_role"].(string)
+	}
 
 	jobs := []GlueJob{}
 
@@ -99,6 +105,13 @@ func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error
 			}
 		}
 
+		var jobRole string
+		if properties["roe"] != nil {
+			jobRole = properties["roe"].(string)
+		} else {
+			jobRole = iamRole
+		}
+
 		job := GlueJob{
 			Name:        key.(string),
 			Description: properties["description"].(string),
@@ -106,6 +119,7 @@ func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error
 			Entrypoint:  entrypoint,
 			Args:        properties["args"],
 			Requires:    requiredJobs,
+			Role:        jobRole,
 			Tags:        tags,
 		}
 
@@ -125,6 +139,7 @@ func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error
 	return &GlueWorkflow{
 		Name:        rawWorkflow["name"].(string),
 		Description: rawWorkflow["description"].(string),
+		IamRole:     iamRole,
 		Jobs:        jobs,
 		Schedule:    schedule,
 	}, nil
@@ -145,6 +160,32 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 
 	resources := map[string]interface{}{
 		workflow.Name: awsGlueWorkflow,
+	}
+
+	for _, job := range workflow.Jobs {
+		resourceName := fmt.Sprintf("Job%s", job.Name)
+		var commandName string
+		if job.Type == PythonJob {
+			commandName = "pythonshell"
+			var jobRole string
+			if len(job.Role) > 0 {
+				jobRole = job.Role
+			} else {
+				jobRole = workflow.IamRole
+			}
+			resources[resourceName] = map[string]interface{}{
+				"Type": "AWS::Glue::Job",
+				"Properties": map[string]interface{}{
+					"Command": map[string]interface{}{
+						"Name":           commandName,
+						"PythonVersion":  "3",
+						"ScriptLocation": job.Entrypoint,
+					},
+					"DefaultArguments": job.Args,
+					"Role":             jobRole,
+				},
+			}
+		}
 	}
 
 	for _, job := range workflow.Jobs {

@@ -9,6 +9,8 @@ schedule:
 tags:
   lob: "sales"
 
+iam_role: iam-role-arn
+
 jobs:
   ingestion:
     description: "extract log from excel to s3"
