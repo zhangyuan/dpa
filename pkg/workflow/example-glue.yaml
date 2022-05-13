@@ -45,8 +45,12 @@ Resources:
         - JobName: ingestion
           LogicalOperator: EQUALS
           State: SUCCEEDED
+      Actions:
+        - JobName: transformation
 
   Trigger_ingestion:
     Type: AWS::Glue::Trigger
     Properties:
       Description: "trigger ingestion"
+      Actions:
+        - JobName: ingestion

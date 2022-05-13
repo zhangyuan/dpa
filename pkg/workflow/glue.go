@@ -192,6 +192,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		fmt.Sprintf("Workflow_%s", workflow.Name): awsGlueWorkflow,
 	}
 
+	// render job
 	for _, job := range workflow.Jobs {
 		if job.Type != PythonJob {
 			continue
@@ -253,6 +254,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		}
 	}
 
+	// render trigger
 	for _, job := range workflow.Jobs {
 		conditions := lo.Map(job.Requires, func(rj RequiredJob, i int) map[string]interface{} {
 			return map[string]interface{}{
@@ -271,6 +273,14 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 				"Conditions": conditions,
 			}
 		}
+
+		actions := []map[string]interface{}{
+			{
+				"JobName": job.Name,
+			},
+		}
+		properties["Actions"] = actions
+
 		trigger := map[string]interface{}{
 			"Type":       "AWS::Glue::Trigger",
 			"Properties": properties,
