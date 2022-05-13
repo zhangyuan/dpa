@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"dp/pkg/python"
 	"fmt"
 
 	"github.com/heimdalr/dag"
@@ -11,12 +12,13 @@ import (
 
 type GlueWorkflow struct {
 	Workflow
-	Name        string
-	Description string
-	Jobs        []GlueJob
-	Schedule    Schedule
-	IamRole     string
-	Tags        []Tag
+	ProjectDirectory string
+	Name             string
+	Description      string
+	Jobs             []GlueJob
+	Schedule         Schedule
+	IamRole          string
+	Tags             []Tag
 }
 
 type GlueJob struct {
@@ -44,6 +46,11 @@ const (
 	DummyJob   string = "dummy"
 )
 
+type PythonModule struct {
+	Name    string
+	Version string
+}
+
 func ParseJobType(rawType string) (string, error) {
 	switch rawType {
 	case PythonJob:
@@ -57,7 +64,7 @@ func ParseJobType(rawType string) (string, error) {
 	return "", errors.Errorf("invalid job type %v", rawType)
 }
 
-func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error) {
+func parseGlueWorkflow(projectDirectory string, rawWorkflow map[string]interface{}) (*GlueWorkflow, error) {
 	var iamRole string
 
 	if rawWorkflow["iam_role"] != nil {
@@ -148,12 +155,13 @@ func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error
 	}
 
 	return &GlueWorkflow{
-		Name:        rawWorkflow["name"].(string),
-		Description: rawWorkflow["description"].(string),
-		IamRole:     iamRole,
-		Jobs:        jobs,
-		Schedule:    schedule,
-		Tags:        tags,
+		ProjectDirectory: projectDirectory,
+		Name:             rawWorkflow["name"].(string),
+		Description:      rawWorkflow["description"].(string),
+		IamRole:          iamRole,
+		Jobs:             jobs,
+		Schedule:         schedule,
+		Tags:             tags,
 	}, nil
 }
 
@@ -205,16 +213,26 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 				return "", errors.Wrap(err, message)
 			}
 
+			defaultArguments := map[string]interface{}{
+				"--arguments": string(arguments),
+			}
+
+			pythonModules, err := python.GetPythonRequirements(workflow.ProjectDirectory)
+			if err != nil {
+				return "", errors.Wrap(err, "fail to parse python requirements")
+			}
+			if len(pythonModules) > 0 {
+				defaultArguments["--additional-python-modules"] = pythonModules.ToString()
+			}
+
 			properties := map[string]interface{}{
 				"Command": map[string]interface{}{
 					"Name":           commandName,
 					"PythonVersion":  "3",
 					"ScriptLocation": job.Entrypoint,
 				},
-				"DefaultArguments": map[string]interface{}{
-					"--arguments": string(arguments),
-				},
-				"Role": jobRole,
+				"DefaultArguments": defaultArguments,
+				"Role":             jobRole,
 			}
 
 			if job.Tags != nil && len(job.Tags) > 0 {

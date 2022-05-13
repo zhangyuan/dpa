@@ -11,13 +11,14 @@ import (
 
 func TestParseGlueWorkflow(t *testing.T) {
 	yamlFileContent, _ := ioutil.ReadFile("example-0.1.yaml")
-	workflow, err := Parse(yamlFileContent)
+	workflow, err := Parse("fixture/lakefoundation-project", yamlFileContent)
 
 	assert.Nil(t, err)
 
 	expected := &GlueWorkflow{
-		Name:        "my-workflow",
-		Description: "my workflow",
+		ProjectDirectory: "fixture/lakefoundation-project",
+		Name:             "my-workflow",
+		Description:      "my workflow",
 		Schedule: Schedule{
 			Cron: "00 20 * * ? *",
 		},
@@ -110,9 +111,10 @@ func TestGetDag(t *testing.T) {
 
 func glueWorkflowFixture() Workflow {
 	workflow := GlueWorkflow{
-		Name:        "my-workflow",
-		Description: "my workflow",
-		IamRole:     "iam-role-arn",
+		ProjectDirectory: "fixtures/lakefoundation-project",
+		Name:             "my-workflow",
+		Description:      "my workflow",
+		IamRole:          "iam-role-arn",
 		Tags: []Tag{
 			{Name: "lob", Value: "sales"},
 		},
