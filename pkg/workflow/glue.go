@@ -16,6 +16,7 @@ type GlueWorkflow struct {
 	Jobs        []GlueJob
 	Schedule    Schedule
 	IamRole     string
+	Tags        []Tag
 }
 
 type GlueJob struct {
@@ -57,13 +58,14 @@ func ParseJobType(rawType string) (string, error) {
 }
 
 func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error) {
-	rawJobs := rawWorkflow["jobs"].(map[interface{}]interface{})
 	var iamRole string
+
 	if rawWorkflow["iam_role"] != nil {
 		iamRole = rawWorkflow["iam_role"].(string)
 	}
 
 	jobs := []GlueJob{}
+	rawJobs := rawWorkflow["jobs"].(map[interface{}]interface{})
 
 	for key, value := range rawJobs {
 		properties := value.(map[interface{}]interface{})
@@ -136,12 +138,22 @@ func parseGlueWorkflow(rawWorkflow map[string]interface{}) (*GlueWorkflow, error
 		}
 	}
 
+	tags := []Tag{}
+	if rawWorkflow["tags"] != nil {
+		rawTags := rawWorkflow["tags"].(map[interface{}]interface{})
+
+		for k, v := range rawTags {
+			tags = append(tags, Tag{Name: k.(string), Value: v.(string)})
+		}
+	}
+
 	return &GlueWorkflow{
 		Name:        rawWorkflow["name"].(string),
 		Description: rawWorkflow["description"].(string),
 		IamRole:     iamRole,
 		Jobs:        jobs,
 		Schedule:    schedule,
+		Tags:        tags,
 	}, nil
 }
 
@@ -150,16 +162,26 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	stack["AWSTemplateFormatVersion"] = "2010-09-09"
 	stack["Description"] = workflow.Description
 
+	awsGlueWorkflowProperties := map[string]interface{}{
+		"Description": workflow.Description,
+		"Name":        workflow.Name,
+	}
+
+	if workflow.Tags != nil && len(workflow.Tags) > 0 {
+		tags := make(map[string]interface{})
+		lo.ForEach(workflow.Tags, func(t Tag, i int) {
+			tags[t.Name] = t.Value
+		})
+		awsGlueWorkflowProperties["Tags"] = tags
+	}
+
 	awsGlueWorkflow := map[string]interface{}{
-		"Type": "AWS::Glue::Workflow",
-		"Properties": map[string]string{
-			"Description": workflow.Description,
-			"Name":        fmt.Sprintf("Workflow_%s", workflow.Name),
-		},
+		"Type":       "AWS::Glue::Workflow",
+		"Properties": awsGlueWorkflowProperties,
 	}
 
 	resources := map[string]interface{}{
-		workflow.Name: awsGlueWorkflow,
+		fmt.Sprintf("Workflow_%s", workflow.Name): awsGlueWorkflow,
 	}
 
 	for _, job := range workflow.Jobs {
@@ -183,20 +205,33 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 				return "", errors.Wrap(err, message)
 			}
 
-			resources[resourceName] = map[string]interface{}{
-				"Type": "AWS::Glue::Job",
-				"Properties": map[string]interface{}{
-					"Command": map[string]interface{}{
-						"Name":           commandName,
-						"PythonVersion":  "3",
-						"ScriptLocation": job.Entrypoint,
-					},
-					"DefaultArguments": map[string]interface{}{
-						"--arguments": string(arguments),
-					},
-					"Role": jobRole,
+			properties := map[string]interface{}{
+				"Command": map[string]interface{}{
+					"Name":           commandName,
+					"PythonVersion":  "3",
+					"ScriptLocation": job.Entrypoint,
 				},
+				"DefaultArguments": map[string]interface{}{
+					"--arguments": string(arguments),
+				},
+				"Role": jobRole,
 			}
+
+			if job.Tags != nil && len(job.Tags) > 0 {
+				tags := make(map[string]interface{})
+				lo.ForEach(job.Tags, func(t Tag, i int) {
+					tags[t.Name] = t.Value
+				})
+
+				properties["Tags"] = tags
+			}
+
+			glueJob := map[string]interface{}{
+				"Type":       "AWS::Glue::Job",
+				"Properties": properties,
+			}
+
+			resources[resourceName] = glueJob
 		}
 	}
 

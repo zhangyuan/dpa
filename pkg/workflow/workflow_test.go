@@ -22,6 +22,9 @@ func TestParseGlueWorkflow(t *testing.T) {
 			Cron: "00 20 * * ? *",
 		},
 		IamRole: "iam-role-arn",
+		Tags: []Tag{
+			{Name: "lob", Value: "sales"},
+		},
 		Jobs: []GlueJob{
 			{
 				Name:        "ingestion",
@@ -110,6 +113,9 @@ func glueWorkflowFixture() Workflow {
 		Name:        "my-workflow",
 		Description: "my workflow",
 		IamRole:     "iam-role-arn",
+		Tags: []Tag{
+			{Name: "lob", Value: "sales"},
+		},
 		Jobs: []GlueJob{
 			{
 				Name:        "ingestion",
