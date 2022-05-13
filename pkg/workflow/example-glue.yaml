@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: my workflow
 Resources:
-  my-workflow:
+  Workflow_my-workflow:
     Type: AWS::Glue::Workflow
     Properties:
       Description: my workflow
       Name: my-workflow
-  Jobingestion:
+  Job_ingestion:
     Type: AWS::Glue::Job
     Properties:
       Command:
@@ -16,8 +16,7 @@ Resources:
       DefaultArguments:
         --arguments: '{"raw_path":"s3://rawStorageBucket/raw/","schema":{"description":"string","id":"int"},"source_path":"s3://sourceBucket/source/"}'        
       Role: "iam-role-arn"
-
-  Jobtransformation:
+  Job_transformation:
     Type: AWS::Glue::Job
     Properties:
       Command:
@@ -26,10 +25,8 @@ Resources:
         ScriptLocation: transformations/transform.py
       DefaultArguments:
         --arguments: '{"years":[2021,2022]}'
-
       Role: "iam-role-arn"
-
-  transformationTrigger:
+  Trigger_transformation:
     Type: AWS::Glue::Trigger
     Properties:
       Description: trigger transformation
@@ -38,7 +35,8 @@ Resources:
         - JobName: ingestion
           LogicalOperator: EQUALS
           State: SUCCEEDED
-  ingestionTrigger:
+
+  Trigger_ingestion:
     Type: AWS::Glue::Trigger
     Properties:
       Description: "trigger ingestion"
