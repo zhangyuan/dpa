@@ -154,7 +154,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		"Type": "AWS::Glue::Workflow",
 		"Properties": map[string]string{
 			"Description": workflow.Description,
-			"Name":        workflow.Name,
+			"Name":        fmt.Sprintf("Workflow_%s", workflow.Name),
 		},
 	}
 
@@ -167,7 +167,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			continue
 		}
 
-		resourceName := fmt.Sprintf("Job%s", job.Name)
+		resourceName := fmt.Sprintf("Job_%s", job.Name)
 		var commandName string
 		if job.Type == PythonJob {
 			commandName = "pythonshell"
@@ -223,7 +223,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			"Properties": properties,
 		}
 
-		triggerName := fmt.Sprintf("%sTrigger", job.Name)
+		triggerName := fmt.Sprintf("Trigger_%s", job.Name)
 		resources[triggerName] = trigger
 	}
 
