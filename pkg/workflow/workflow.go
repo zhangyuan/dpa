@@ -18,7 +18,7 @@ type Tag struct {
 	Value string
 }
 
-func Parse(content []byte) (Workflow, error) {
+func Parse(projectDirectory string, content []byte) (Workflow, error) {
 	var rawWorkflow map[string]interface{}
 	err := yaml.Unmarshal(content, &rawWorkflow)
 	if err != nil {
@@ -26,7 +26,7 @@ func Parse(content []byte) (Workflow, error) {
 	}
 
 	if rawWorkflow["vendor"] == "glue" {
-		return parseGlueWorkflow(rawWorkflow)
+		return parseGlueWorkflow(projectDirectory, rawWorkflow)
 	}
 
 	return nil, errors.New("invalid vendor.")
