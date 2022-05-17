@@ -17,7 +17,8 @@ Resources:
       Schedule: cron(00 20 * * ? *)
       StartOnCreation: true
       WorkflowName: "!Ref Workflow_my-workflow"
-      Actions: []
+      Actions:
+        - ingestion
 
   Job_ingestion:
     Type: AWS::Glue::Job
