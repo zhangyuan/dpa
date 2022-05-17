@@ -189,8 +189,23 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	}
 
 	resources := map[string]interface{}{
-		fmt.Sprintf("Workflow_%s", workflow.Name): awsGlueWorkflow,
+		workflow.ResourceName(): awsGlueWorkflow,
 	}
+	workflowStartTrigger := map[string]interface{}{
+		"Type": "AWS::Glue::Trigger",
+		"Properties": map[string]interface{}{
+			"Name":            fmt.Sprintf("trigger-start-%s", workflow.Name),
+			"Type":            "SCHEDULED",
+			"Schedule":        fmt.Sprintf("cron(%s)", workflow.Schedule.Cron),
+			"StartOnCreation": true,
+			"WorkflowName":    fmt.Sprintf("!Ref %s", workflow.ResourceName()),
+			"Actions":         []string{},
+		},
+	}
+
+	workflowStartResourceName := fmt.Sprintf("Trigger_Start_%s", workflow.ResourceName())
+
+	resources[workflowStartResourceName] = workflowStartTrigger
 
 	// render job
 	for _, job := range workflow.Jobs {
@@ -373,4 +388,8 @@ func (workflow *GlueWorkflow) Dag() error {
 	}
 
 	return nil
+}
+
+func (workflow *GlueWorkflow) ResourceName() string {
+	return fmt.Sprintf("Workflow_%s", workflow.Name)
 }
