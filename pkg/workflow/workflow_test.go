@@ -115,6 +115,9 @@ func glueWorkflowFixture() Workflow {
 		Name:             "my-workflow",
 		Description:      "my workflow",
 		IamRole:          "iam-role-arn",
+		Schedule: Schedule{
+			Cron: "00 20 * * ? *",
+		},
 		Tags: []Tag{
 			{Name: "lob", Value: "sales"},
 		},

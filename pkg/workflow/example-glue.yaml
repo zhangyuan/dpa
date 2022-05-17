@@ -9,6 +9,16 @@ Resources:
       Tags:
         lob: "sales"
 
+  Trigger_Start_Workflow_my-workflow:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: trigger-start-my-workflow
+      Type: SCHEDULED
+      Schedule: cron(00 20 * * ? *)
+      StartOnCreation: true
+      WorkflowName: "!Ref Workflow_my-workflow"
+      Actions: []
+
   Job_ingestion:
     Type: AWS::Glue::Job
     Properties:
