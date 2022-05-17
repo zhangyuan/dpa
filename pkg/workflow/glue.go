@@ -204,8 +204,10 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			"Type":            "SCHEDULED",
 			"Schedule":        fmt.Sprintf("cron(%s)", workflow.Schedule.Cron),
 			"StartOnCreation": true,
-			"WorkflowName":    fmt.Sprintf("!Ref %s", workflow.ResourceName()),
-			"Actions":         rootJobsNames,
+			"WorkflowName": map[string]interface{}{
+				"Ref": workflow.ResourceName(),
+			},
+			"Actions": rootJobsNames,
 		},
 	}
 
