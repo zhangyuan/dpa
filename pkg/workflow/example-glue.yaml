@@ -16,7 +16,8 @@ Resources:
       Type: SCHEDULED
       Schedule: cron(00 20 * * ? *)
       StartOnCreation: true
-      WorkflowName: "!Ref Workflow_my-workflow"
+      WorkflowName: 
+        Ref: Workflow_my-workflow
       Actions:
         - ingestion
 
