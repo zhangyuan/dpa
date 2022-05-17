@@ -19,7 +19,8 @@ Resources:
       WorkflowName: 
         Ref: Workflow_my-workflow
       Actions:
-        - ingestion
+        - JobName:
+            Ref: Job_ingestion
 
   Job_ingestion:
     Type: AWS::Glue::Job
@@ -58,11 +59,13 @@ Resources:
           LogicalOperator: EQUALS
           State: SUCCEEDED
       Actions:
-        - JobName: transformation
+        - JobName: 
+            Ref: Job_transformation
 
   Trigger_ingestion:
     Type: AWS::Glue::Trigger
     Properties:
       Description: "trigger ingestion"
       Actions:
-        - JobName: ingestion
+        - JobName: 
+            Ref: Job_ingestion
