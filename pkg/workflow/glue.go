@@ -191,6 +191,12 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	resources := map[string]interface{}{
 		workflow.ResourceName(): awsGlueWorkflow,
 	}
+
+	rootJobsNames, err := workflow.GetRootJobs()
+	if err != nil {
+		return "", errors.Wrap(err, "fail to get root jobs")
+	}
+
 	workflowStartTrigger := map[string]interface{}{
 		"Type": "AWS::Glue::Trigger",
 		"Properties": map[string]interface{}{
@@ -199,7 +205,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			"Schedule":        fmt.Sprintf("cron(%s)", workflow.Schedule.Cron),
 			"StartOnCreation": true,
 			"WorkflowName":    fmt.Sprintf("!Ref %s", workflow.ResourceName()),
-			"Actions":         []string{},
+			"Actions":         rootJobsNames,
 		},
 	}
 
@@ -392,4 +398,43 @@ func (workflow *GlueWorkflow) Dag() error {
 
 func (workflow *GlueWorkflow) ResourceName() string {
 	return fmt.Sprintf("Workflow_%s", workflow.Name)
+}
+
+func (workflow *GlueWorkflow) GetRootJobs() ([]string, error) {
+	d := dag.NewDAG()
+
+	jobs := &workflow.Jobs
+
+	jobNameToVertex := make(map[string]string)
+
+	for _, job := range *jobs {
+		v1, _ := d.AddVertex(job.Name)
+		jobNameToVertex[job.Name] = v1
+	}
+
+	jobNames := lo.Map(workflow.Jobs, func(t GlueJob, i int) string {
+		return t.Name
+	})
+
+	for _, job := range *jobs {
+		for _, requiredJob := range job.Requires {
+			requiredJobName, ok := lo.Find(jobNames, func(jobName string) bool {
+				return requiredJob.JobName == jobName
+			})
+			if !ok {
+				return nil, errors.Errorf("invalid job name %s", requiredJob.JobName)
+			}
+
+			_ = d.AddEdge(jobNameToVertex[requiredJobName], jobNameToVertex[job.Name])
+		}
+	}
+
+	rootJobNames := []string{}
+
+	for _, jobName := range d.GetRoots() {
+		rootJobNames = append(rootJobNames, jobName.(string))
+	}
+
+	return rootJobNames, nil
+
 }
