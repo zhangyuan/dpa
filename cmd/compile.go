@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"dp/pkg/build"
+	"dp/pkg/compile"
 	"dp/pkg/errors"
 	"fmt"
 	"log"
@@ -9,16 +9,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// buildCmd represents the build command
-var buildCmd = &cobra.Command{
-	Use: "build",
+// compileCmd represents the build command
+var compileCmd = &cobra.Command{
+	Use: "compile",
 	Run: func(cmd *cobra.Command, args []string) {
 		path, err := getWorkingDirectory(args)
 		if err != nil {
 			log.Fatalln("invalid directory", err)
 		}
 
-		if err := build.Build(path); err != nil {
+		if err := compile.Compile(path); err != nil {
 			if err, ok := err.(errors.StackTracer); ok {
 				for _, f := range err.StackTrace() {
 					fmt.Printf("%+s:%d\n", f, f)
@@ -31,5 +31,5 @@ var buildCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(buildCmd)
+	rootCmd.AddCommand(compileCmd)
 }
