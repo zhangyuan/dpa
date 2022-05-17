@@ -207,7 +207,13 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			"WorkflowName": map[string]interface{}{
 				"Ref": workflow.ResourceName(),
 			},
-			"Actions": rootJobsNames,
+			"Actions": lo.Map(rootJobsNames, func(jobName string, i int) map[string]interface{} {
+				return map[string]interface{}{
+					"JobName": map[string]interface{}{
+						"Ref": ToJobResourceName(jobName),
+					},
+				}
+			}),
 		},
 	}
 
@@ -221,7 +227,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			continue
 		}
 
-		resourceName := fmt.Sprintf("Job_%s", job.Name)
+		resourceName := job.ResourceName()
 		var commandName string
 		if job.Type == PythonJob {
 			commandName = "pythonshell"
@@ -299,7 +305,9 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 
 		actions := []map[string]interface{}{
 			{
-				"JobName": job.Name,
+				"JobName": map[string]interface{}{
+					"Ref": job.ResourceName(),
+				},
 			},
 		}
 		properties["Actions"] = actions
@@ -439,4 +447,12 @@ func (workflow *GlueWorkflow) GetRootJobs() ([]string, error) {
 
 	return rootJobNames, nil
 
+}
+
+func (glueJob *GlueJob) ResourceName() string {
+	return fmt.Sprintf("Job_%s", glueJob.Name)
+}
+
+func ToJobResourceName(name string) string {
+	return fmt.Sprintf("Job_%s", name)
 }
