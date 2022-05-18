@@ -56,19 +56,15 @@ Resources:
     Properties:
       Description: trigger transformation
       Type: CONDITIONAL
+      WorkflowName:
+        Ref: WorkflowMyWorkflow
       Predicate:
         Conditions:
-        - JobName: ingestion
+        - JobName:
+            Ref: JobIngestion
           LogicalOperator: EQUALS
           State: SUCCEEDED
+        Logical: AND
       Actions:
         - JobName: 
             Ref: JobTransformation
-
-  # TriggerIngestion:
-  #   Type: AWS::Glue::Trigger
-  #   Properties:
-  #     Description: "trigger ingestion"
-  #     Actions:
-  #       - JobName: 
-  #           Ref: Job_ingestion

@@ -190,7 +190,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	}
 
 	resources := map[string]interface{}{
-		workflow.ResourceName(): awsGlueWorkflow,
+		workflow.ResourceId(): awsGlueWorkflow,
 	}
 
 	rootJobsNames, err := workflow.GetRootJobs()
@@ -206,7 +206,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			"Schedule":        fmt.Sprintf("cron(%s)", workflow.Schedule.Cron),
 			"StartOnCreation": true,
 			"WorkflowName": map[string]interface{}{
-				"Ref": workflow.ResourceName(),
+				"Ref": workflow.ResourceId(),
 			},
 			"Actions": lo.Map(rootJobsNames, func(jobName string, i int) map[string]interface{} {
 				return map[string]interface{}{
@@ -218,7 +218,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		},
 	}
 
-	workflowStartResourceName := fmt.Sprintf("TriggerStart%s", workflow.ResourceName())
+	workflowStartResourceName := fmt.Sprintf("TriggerStart%s", workflow.ResourceId())
 
 	resources[workflowStartResourceName] = workflowStartTrigger
 
@@ -308,7 +308,9 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 
 		conditions := lo.Map(job.Requires, func(rj RequiredJob, i int) map[string]interface{} {
 			return map[string]interface{}{
-				"JobName":         rj.JobName,
+				"JobName": map[string]interface{}{
+					"Ref": ToJobResourceId(rj.JobName),
+				},
 				"LogicalOperator": "EQUALS",
 				"State":           "SUCCEEDED",
 			}
@@ -321,6 +323,7 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		if len(conditions) > 0 {
 			properties["Predicate"] = map[string]interface{}{
 				"Conditions": conditions,
+				"Logical":    "AND",
 			}
 		}
 
@@ -333,6 +336,9 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		}
 		properties["Actions"] = actions
 		properties["Type"] = "CONDITIONAL"
+		properties["WorkflowName"] = map[string]interface{}{
+			"Ref": workflow.ResourceId(),
+		}
 
 		trigger := map[string]interface{}{
 			"Type":       "AWS::Glue::Trigger",
@@ -429,7 +435,7 @@ func (workflow *GlueWorkflow) Dag() error {
 	return nil
 }
 
-func (workflow *GlueWorkflow) ResourceName() string {
+func (workflow *GlueWorkflow) ResourceId() string {
 	return fmt.Sprintf("Workflow%s", NormalizeResourceId(workflow.Name))
 }
 
