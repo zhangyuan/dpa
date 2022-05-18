@@ -3,6 +3,7 @@ package workflow
 import (
 	"dp/pkg/python"
 	"fmt"
+	"strings"
 
 	"github.com/heimdalr/dag"
 	"github.com/pkg/errors"
@@ -210,14 +211,14 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			"Actions": lo.Map(rootJobsNames, func(jobName string, i int) map[string]interface{} {
 				return map[string]interface{}{
 					"JobName": map[string]interface{}{
-						"Ref": ToJobResourceName(jobName),
+						"Ref": ToJobResourceId(jobName),
 					},
 				}
 			}),
 		},
 	}
 
-	workflowStartResourceName := fmt.Sprintf("Trigger_Start_%s", workflow.ResourceName())
+	workflowStartResourceName := fmt.Sprintf("TriggerStart%s", workflow.ResourceName())
 
 	resources[workflowStartResourceName] = workflowStartTrigger
 
@@ -227,32 +228,39 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			continue
 		}
 
-		resourceName := job.ResourceName()
+		resourceName := job.ResourceId()
+
+		var jobRole string
 		var commandName string
+		var defaultArguments map[string]interface{}
+
 		if job.Type == PythonJob {
 			commandName = "pythonshell"
-			var jobRole string
+
 			if len(job.Role) > 0 {
 				jobRole = job.Role
 			} else {
 				jobRole = workflow.IamRole
 			}
-			arguments, err := json.Marshal(job.Args)
-			if err != nil {
-				message := fmt.Sprintf("invalid arguments: %v", job.Args)
-				return "", errors.Wrap(err, message)
-			}
 
-			defaultArguments := map[string]interface{}{
-				"--arguments": string(arguments),
-			}
+			if job.Args != nil {
+				arguments, err := json.Marshal(job.Args)
+				if err != nil {
+					message := fmt.Sprintf("invalid arguments: %v", job.Args)
+					return "", errors.Wrap(err, message)
+				}
 
-			pythonModules, err := python.GetPythonRequirements(workflow.ProjectDirectory)
-			if err != nil {
-				return "", errors.Wrap(err, "fail to parse python requirements")
-			}
-			if len(pythonModules) > 0 {
-				defaultArguments["--additional-python-modules"] = pythonModules.ToString()
+				defaultArguments = map[string]interface{}{
+					"--arguments": string(arguments),
+				}
+
+				pythonModules, err := python.GetPythonRequirements(workflow.ProjectDirectory)
+				if err != nil {
+					return "", errors.Wrap(err, "fail to parse python requirements")
+				}
+				if len(pythonModules) > 0 {
+					defaultArguments["--additional-python-modules"] = pythonModules.ToString()
+				}
 			}
 
 			properties := map[string]interface{}{
@@ -263,6 +271,15 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 				},
 				"DefaultArguments": defaultArguments,
 				"Role":             jobRole,
+				"Name":             job.Name,
+			}
+
+			if jobRole != "" {
+				properties["Role"] = jobRole
+			}
+
+			if defaultArguments != nil {
+				properties["DefaultArguments"] = defaultArguments
 			}
 
 			if job.Tags != nil && len(job.Tags) > 0 {
@@ -285,6 +302,10 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 
 	// render trigger
 	for _, job := range workflow.Jobs {
+		if lo.Contains(rootJobsNames, job.Name) {
+			continue
+		}
+
 		conditions := lo.Map(job.Requires, func(rj RequiredJob, i int) map[string]interface{} {
 			return map[string]interface{}{
 				"JobName":         rj.JobName,
@@ -306,18 +327,20 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		actions := []map[string]interface{}{
 			{
 				"JobName": map[string]interface{}{
-					"Ref": job.ResourceName(),
+					"Ref": job.ResourceId(),
 				},
 			},
 		}
 		properties["Actions"] = actions
+		properties["Type"] = "CONDITIONAL"
 
 		trigger := map[string]interface{}{
 			"Type":       "AWS::Glue::Trigger",
 			"Properties": properties,
 		}
 
-		triggerName := fmt.Sprintf("Trigger_%s", job.Name)
+		triggerName := ToTriggerResourceId(job.Name)
+
 		resources[triggerName] = trigger
 	}
 
@@ -407,7 +430,7 @@ func (workflow *GlueWorkflow) Dag() error {
 }
 
 func (workflow *GlueWorkflow) ResourceName() string {
-	return fmt.Sprintf("Workflow_%s", workflow.Name)
+	return fmt.Sprintf("Workflow%s", NormalizeResourceId(workflow.Name))
 }
 
 func (workflow *GlueWorkflow) GetRootJobs() ([]string, error) {
@@ -449,10 +472,21 @@ func (workflow *GlueWorkflow) GetRootJobs() ([]string, error) {
 
 }
 
-func (glueJob *GlueJob) ResourceName() string {
-	return fmt.Sprintf("Job_%s", glueJob.Name)
+func (glueJob *GlueJob) ResourceId() string {
+	return ToJobResourceId(glueJob.Name)
 }
 
-func ToJobResourceName(name string) string {
-	return fmt.Sprintf("Job_%s", name)
+func ToJobResourceId(jobName string) string {
+	return fmt.Sprintf("Job%s", NormalizeResourceId(jobName))
+}
+
+func ToTriggerResourceId(jobName string) string {
+	return fmt.Sprintf("Trigger%s", NormalizeResourceId(jobName))
+}
+
+func NormalizeResourceId(name string) string {
+	name = strings.ReplaceAll(name, "_", " ")
+	name = strings.ReplaceAll(name, "-", " ")
+	name = strings.Title(name)
+	return strings.ReplaceAll(name, " ", "")
 }

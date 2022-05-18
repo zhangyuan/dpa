@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: my workflow
 Resources:
-  Workflow_my-workflow:
+  WorkflowMyWorkflow:
     Type: AWS::Glue::Workflow
     Properties:
       Description: my workflow
@@ -9,7 +9,7 @@ Resources:
       Tags:
         lob: "sales"
 
-  Trigger_Start_Workflow_my-workflow:
+  TriggerStartWorkflowMyWorkflow:
     Type: AWS::Glue::Trigger
     Properties:
       Name: trigger-start-my-workflow
@@ -17,14 +17,15 @@ Resources:
       Schedule: cron(00 20 * * ? *)
       StartOnCreation: true
       WorkflowName: 
-        Ref: Workflow_my-workflow
+        Ref: WorkflowMyWorkflow
       Actions:
         - JobName:
-            Ref: Job_ingestion
+            Ref: JobIngestion
 
-  Job_ingestion:
+  JobIngestion:
     Type: AWS::Glue::Job
     Properties:
+      Name: ingestion
       Command:
         Name: pythonshell
         PythonVersion: "3"
@@ -37,7 +38,7 @@ Resources:
         team: "fantastic-team"
         region: "us-west-1"
 
-  Job_transformation:
+  JobTransformation:
     Type: AWS::Glue::Job
     Properties:
       Command:
@@ -47,12 +48,14 @@ Resources:
       DefaultArguments:
         --arguments: '{"years":[2021,2022]}'
         --additional-python-modules: "openpyxl==3.0.9,Office365-REST-Python-Client"
-      Role: "iam-role-arn"
+      Role: iam-role-arn
+      Name: transformation
 
-  Trigger_transformation:
+  TriggerTransformation:
     Type: AWS::Glue::Trigger
     Properties:
       Description: trigger transformation
+      Type: CONDITIONAL
       Predicate:
         Conditions:
         - JobName: ingestion
@@ -60,12 +63,12 @@ Resources:
           State: SUCCEEDED
       Actions:
         - JobName: 
-            Ref: Job_transformation
+            Ref: JobTransformation
 
-  Trigger_ingestion:
-    Type: AWS::Glue::Trigger
-    Properties:
-      Description: "trigger ingestion"
-      Actions:
-        - JobName: 
-            Ref: Job_ingestion
+  # TriggerIngestion:
+  #   Type: AWS::Glue::Trigger
+  #   Properties:
+  #     Description: "trigger ingestion"
+  #     Actions:
+  #       - JobName: 
+  #           Ref: Job_ingestion
