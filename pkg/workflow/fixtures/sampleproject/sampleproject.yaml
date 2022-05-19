@@ -11,7 +11,7 @@ tags:
 
 iam_role: iam-role-arn
 python_modules:
-  - sampleproject
+  - sampleproject-0.1-py3.6.egg
 
 jobs:
   ingestion:

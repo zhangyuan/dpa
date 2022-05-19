@@ -10,6 +10,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type Workflow interface {
 	Render() (string, error)
+	Build() error
 	Dag() error
 }
 

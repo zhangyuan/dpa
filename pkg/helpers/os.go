@@ -3,6 +3,7 @@ package helpers
 import (
 	"os"
 
+	cp "github.com/otiai10/copy"
 	"github.com/pkg/errors"
 )
 
@@ -17,4 +18,8 @@ func Mkdirp(projectDirectory string) error {
 		}
 	}
 	return nil
+}
+
+func Copy(fromDirectory string, toDirectory string) error {
+	return cp.Copy(fromDirectory, toDirectory)
 }

@@ -29,10 +29,11 @@ Resources:
       Command:
         Name: pythonshell
         PythonVersion: "3"
-        ScriptLocation: ingestion/ingestion.py
+        ScriptLocation: sampleproject/jobs/ingestion.py
       DefaultArguments:
         --arguments: '{"raw_path":"s3://rawStorageBucket/raw/","schema":{"description":"string","id":"int"},"source_path":"s3://sourceBucket/source/"}'        
         --additional-python-modules: "openpyxl==3.0.9,Office365-REST-Python-Client"
+        --extra-py-files: sampleproject-0.1-py3.6.egg
       Role: "iam-role-arn"
       Tags:
         team: "fantastic-team"
@@ -44,10 +45,11 @@ Resources:
       Command:
         Name: pythonshell
         PythonVersion: "3"
-        ScriptLocation: transformations/transform.py
+        ScriptLocation: sampleproject/jobs/transform.py
       DefaultArguments:
         --arguments: '{"years":[2021,2022]}'
         --additional-python-modules: "openpyxl==3.0.9,Office365-REST-Python-Client"
+        --extra-py-files: sampleproject-0.1-py3.6.egg
       Role: iam-role-arn
       Name: transformation
 
@@ -56,6 +58,7 @@ Resources:
     Properties:
       Description: trigger transformation
       Type: CONDITIONAL
+      StartOnCreation: true
       WorkflowName:
         Ref: WorkflowMyWorkflow
       Predicate:

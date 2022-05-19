@@ -1,8 +1,10 @@
 package workflow
 
 import (
+	"dp/pkg/helpers"
 	"dp/pkg/python"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/heimdalr/dag"
@@ -20,6 +22,7 @@ type GlueWorkflow struct {
 	Schedule         Schedule
 	IamRole          string
 	PythonModules    []string
+	ArtifactsPath    string
 	Tags             []Tag
 }
 
@@ -71,6 +74,11 @@ func parseGlueWorkflow(projectDirectory string, rawWorkflow map[string]interface
 
 	if rawWorkflow["iam_role"] != nil {
 		iamRole = rawWorkflow["iam_role"].(string)
+	}
+
+	var artifactsPath string
+	if rawWorkflow["artifacts_path"] != nil {
+		artifactsPath = strings.TrimSuffix(rawWorkflow["artifacts_path"].(string), "/")
 	}
 
 	jobs := []GlueJob{}
@@ -175,6 +183,7 @@ func parseGlueWorkflow(projectDirectory string, rawWorkflow map[string]interface
 		Schedule:         schedule,
 		Tags:             tags,
 		PythonModules:    pythonModules,
+		ArtifactsPath:    artifactsPath,
 	}, nil
 }
 
@@ -255,6 +264,23 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 				jobRole = workflow.IamRole
 			}
 
+			defaultArguments = map[string]interface{}{}
+
+			pythonModules, err := python.GetPythonRequirements(workflow.ProjectDirectory)
+			if err != nil {
+				return "", errors.Wrap(err, "fail to parse python requirements")
+			}
+			if len(pythonModules) > 0 {
+				defaultArguments["--additional-python-modules"] = pythonModules.ToString()
+			}
+
+			if len(workflow.PythonModules) > 0 {
+				// extraPyFiles := lo.Map(workflow.PythonModules, func(moduleName string, i int) string {
+				// 	return fmt.Sprintf("%s/%s", workflow.ArtifactsPath, moduleName)
+				// })
+				defaultArguments["--extra-py-files"] = strings.Join(workflow.PythonModules, ",")
+			}
+
 			if job.Args != nil {
 				arguments, err := json.Marshal(job.Args)
 				if err != nil {
@@ -262,24 +288,21 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 					return "", errors.Wrap(err, message)
 				}
 
-				defaultArguments = map[string]interface{}{
-					"--arguments": string(arguments),
-				}
+				defaultArguments["--arguments"] = string(arguments)
+			}
 
-				pythonModules, err := python.GetPythonRequirements(workflow.ProjectDirectory)
-				if err != nil {
-					return "", errors.Wrap(err, "fail to parse python requirements")
-				}
-				if len(pythonModules) > 0 {
-					defaultArguments["--additional-python-modules"] = pythonModules.ToString()
-				}
+			var scriptLocation string
+			if !strings.HasPrefix(job.Entrypoint, "s3://") && workflow.ArtifactsPath != "" {
+				scriptLocation = workflow.ArtifactsPath + "/" + job.Entrypoint
+			} else {
+				scriptLocation = job.Entrypoint
 			}
 
 			properties := map[string]interface{}{
 				"Command": map[string]interface{}{
 					"Name":           commandName,
 					"PythonVersion":  "3",
-					"ScriptLocation": job.Entrypoint,
+					"ScriptLocation": scriptLocation,
 				},
 				"DefaultArguments": defaultArguments,
 				"Role":             jobRole,
@@ -329,7 +352,8 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 		})
 
 		properties := map[string]interface{}{
-			"Description": fmt.Sprintf("trigger %s", job.Name),
+			"Description":     fmt.Sprintf("trigger %s", job.Name),
+			"StartOnCreation": true,
 		}
 
 		if len(conditions) > 0 {
@@ -370,6 +394,57 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 	}
 
 	return string(template), nil
+}
+
+func (workflow *GlueWorkflow) Build() error {
+	workingDirectory := strings.TrimSuffix(workflow.ProjectDirectory, "/")
+
+	buildDirectory := workingDirectory + "/build"
+
+	projectDirectory := buildDirectory + "/project"
+	err := helpers.Mkdirp(projectDirectory)
+	if err != nil {
+		return errors.Wrap(err, "fail to create project directory")
+	}
+
+	cloudformationFilename := "dp-cloudformation.yaml"
+	outputPath := projectDirectory + "/" + cloudformationFilename
+
+	outputContent, err := workflow.Render()
+	if err != nil {
+		return errors.Wrap(err, "fail to render workflow")
+	}
+
+	err = os.WriteFile(outputPath, []byte(outputContent), 0644)
+	if err != nil {
+		return errors.Wrap(err, "fail to write to "+outputPath)
+	}
+
+	artifactsDirectory := buildDirectory + "/artifacts"
+	err = helpers.Mkdirp(artifactsDirectory)
+	if err != nil {
+		return errors.Wrap(err, "fail to create artifacts directory")
+	}
+
+	for _, job := range workflow.Jobs {
+		if job.Type == PythonJob {
+			if strings.HasPrefix(job.Entrypoint, "s3://") {
+				continue
+			}
+			fromPath := workingDirectory + "/" + job.Entrypoint
+			toPath := artifactsDirectory + "/" + job.Entrypoint
+
+			if err := helpers.Copy(fromPath, toPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := helpers.Copy(outputPath, artifactsDirectory+"/"+cloudformationFilename); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // WIP

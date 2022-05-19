@@ -1,2 +1,4 @@
+from sampleproject.shared import hello
+
 if __name__ == "__main__":
-    print("Hello world")
+    hello.hello_world("ingestion")
