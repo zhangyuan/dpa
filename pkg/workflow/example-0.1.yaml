@@ -10,12 +10,14 @@ tags:
   lob: "sales"
 
 iam_role: iam-role-arn
+python_modules:
+  - sampleproject
 
 jobs:
   ingestion:
     description: "extract log from excel to s3"
     type: python
-    entrypoint: ingestion/ingestion.py
+    entrypoint: sampleproject/jobs/ingestion.py
     args:
       source_path: s3://sourceBucket/source/
       raw_path: s3://rawStorageBucket/raw/
@@ -29,7 +31,7 @@ jobs:
   transformation:
     description: "transform and load"
     type: python
-    entrypoint: transformations/transform.py
+    entrypoint: sampleproject/jobs/transform.py
     args:
       years: [2021, 2022]
     requires:

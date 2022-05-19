@@ -11,18 +11,21 @@ import (
 
 func TestParseGlueWorkflow(t *testing.T) {
 	yamlFileContent, _ := ioutil.ReadFile("example-0.1.yaml")
-	workflow, err := Parse("fixture/lakefoundation-project", yamlFileContent)
+	workflow, err := Parse("fixtures/sampleproject", yamlFileContent)
 
 	assert.Nil(t, err)
 
 	expected := &GlueWorkflow{
-		ProjectDirectory: "fixture/lakefoundation-project",
+		ProjectDirectory: "fixtures/sampleproject",
 		Name:             "my-workflow",
 		Description:      "my workflow",
 		Schedule: Schedule{
 			Cron: "00 20 * * ? *",
 		},
 		IamRole: "iam-role-arn",
+		PythonModules: []string{
+			"sampleproject",
+		},
 		Tags: []Tag{
 			{Name: "lob", Value: "sales"},
 		},
@@ -31,7 +34,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 				Name:        "ingestion",
 				Description: "extract log from excel to s3",
 				Type:        PythonJob,
-				Entrypoint:  "ingestion/ingestion.py",
+				Entrypoint:  "sampleproject/jobs/ingestion.py",
 				Args: map[interface{}]interface{}{
 					"source_path": "s3://sourceBucket/source/",
 					"raw_path":    "s3://rawStorageBucket/raw/",
@@ -55,7 +58,7 @@ func TestParseGlueWorkflow(t *testing.T) {
 				Name:        "transformation",
 				Description: "transform and load",
 				Type:        PythonJob,
-				Entrypoint:  "transformations/transform.py",
+				Entrypoint:  "sampleproject/jobs/transform.py",
 				Args: map[interface{}]interface{}{
 					"years": []interface{}{2021, 2022},
 				},

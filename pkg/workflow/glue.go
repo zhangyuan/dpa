@@ -19,6 +19,7 @@ type GlueWorkflow struct {
 	Jobs             []GlueJob
 	Schedule         Schedule
 	IamRole          string
+	PythonModules    []string
 	Tags             []Tag
 }
 
@@ -155,6 +156,16 @@ func parseGlueWorkflow(projectDirectory string, rawWorkflow map[string]interface
 		}
 	}
 
+	var pythonModules []string
+	if rawWorkflow["python_modules"] != nil {
+		rawPythonModules := rawWorkflow["python_modules"].([]interface{})
+		pythonModules = lo.Map(rawPythonModules, func(moduleName interface{}, i int) string {
+			return moduleName.(string)
+		})
+	} else {
+		pythonModules = []string{}
+	}
+
 	return &GlueWorkflow{
 		ProjectDirectory: projectDirectory,
 		Name:             rawWorkflow["name"].(string),
@@ -163,6 +174,7 @@ func parseGlueWorkflow(projectDirectory string, rawWorkflow map[string]interface
 		Jobs:             jobs,
 		Schedule:         schedule,
 		Tags:             tags,
+		PythonModules:    pythonModules,
 	}, nil
 }
 
