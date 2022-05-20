@@ -22,13 +22,13 @@ clean:
 	go clean
 
 install:
-	cp dp `go env GOPATH`/bin/
+	cp dpa `go env GOPATH`/bin/
 
 compress:
-	upx dp
+	upx dpa
 
 e2e: install
-	(mkdir /tmp/e2e && cd /tmp/e2e && dp init)
+	(mkdir /tmp/e2e && cd /tmp/e2e && dpa init)
 
 embed-files:
 	(cd template && find init -type f -not -path "*.pyc" -not -path "*__pycache__*"  -not -path "*/venv/*")
