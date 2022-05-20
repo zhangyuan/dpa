@@ -1,16 +1,17 @@
 package workflow
 
 import (
-	"dp/pkg/helpers"
+	"dpa/pkg/helpers"
 	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRenderGlueWorkflow(t *testing.T) {
+func TestParseAndRenderCloudformationForGlueWorkflow(t *testing.T) {
 	yamlFileContent, _ := ioutil.ReadFile("fixtures/sampleproject/sampleproject.yaml")
 	workflow, err := Parse("fixtures/sampleproject", yamlFileContent)
+	assert.Nil(t, err)
 
 	rendered, err := workflow.Render()
 	assert.Nil(t, err)

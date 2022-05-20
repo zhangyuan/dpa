@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"dp/pkg/build"
-	"dp/pkg/errors"
+	"dpa/pkg/build"
+	"dpa/pkg/errors"
 	"fmt"
 	"log"
 

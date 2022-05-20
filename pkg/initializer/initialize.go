@@ -1,7 +1,7 @@
 package initializer
 
 import (
-	"dp/template"
+	"dpa/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"

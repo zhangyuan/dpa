@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"dp/pkg/errors"
-	"dp/pkg/initializer"
+	"dpa/pkg/errors"
+	"dpa/pkg/initializer"
 
 	"github.com/spf13/cobra"
 )

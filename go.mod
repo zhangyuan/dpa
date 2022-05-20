@@ -1,4 +1,4 @@
-module dp
+module dpa
 
 go 1.18
 

@@ -1,7 +1,7 @@
 package build
 
 import (
-	"dp/pkg/workflow"
+	"dpa/pkg/workflow"
 	"io/ioutil"
 	"path"
 	"strings"

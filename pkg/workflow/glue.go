@@ -1,8 +1,8 @@
 package workflow
 
 import (
-	"dp/pkg/helpers"
-	"dp/pkg/python"
+	"dpa/pkg/helpers"
+	"dpa/pkg/python"
 	"fmt"
 	"os"
 	"strings"
