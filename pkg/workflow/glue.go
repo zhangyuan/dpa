@@ -46,7 +46,7 @@ type Schedule struct {
 
 const (
 	PythonJob  string = "python"
-	GlueSQLJob string = "glue-sql"
+	PySparkJob string = "pyspark"
 	DummyJob   string = "dummy"
 )
 
@@ -59,8 +59,8 @@ func ParseJobType(rawType string) (string, error) {
 	switch rawType {
 	case PythonJob:
 		return PythonJob, nil
-	case GlueSQLJob:
-		return GlueSQLJob, nil
+	case PySparkJob:
+		return PySparkJob, nil
 	case DummyJob:
 		return DummyJob, nil
 	}
@@ -244,53 +244,58 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 
 	// render job
 	for _, job := range workflow.Jobs {
-		if job.Type != PythonJob {
-			continue
-		}
-
 		resourceName := job.ResourceId()
 
 		var jobRole string
 		var commandName string
 		var defaultArguments map[string]interface{}
 
+		if len(job.Role) > 0 {
+			jobRole = job.Role
+		} else {
+			jobRole = workflow.IamRole
+		}
+
+		defaultArguments = map[string]interface{}{}
+
+		if len(workflow.PythonModules) > 0 {
+			extraPyFiles := lo.Map(workflow.PythonModules, func(moduleName string, i int) string {
+				if strings.HasPrefix(moduleName, "s3://") {
+					return moduleName
+				}
+				return fmt.Sprintf("%s/%s", workflow.ArtifactsPath, moduleName)
+			})
+			defaultArguments["--extra-py-files"] = strings.Join(extraPyFiles, ",")
+		}
+
+		if job.Args != nil {
+			arguments, err := json.Marshal(job.Args)
+			if err != nil {
+				message := fmt.Sprintf("invalid arguments: %v", job.Args)
+				return "", errors.Wrap(err, message)
+			}
+
+			defaultArguments["--arguments"] = string(arguments)
+		}
+
+		var scriptLocation string
+		if !strings.HasPrefix(job.Entrypoint, "s3://") && workflow.ArtifactsPath != "" {
+			scriptLocation = workflow.ArtifactsPath + "/" + job.Entrypoint
+		} else {
+			scriptLocation = job.Entrypoint
+		}
+
+		var jobTags map[string]interface{}
+
+		if job.Tags != nil && len(job.Tags) > 0 {
+			jobTags = make(map[string]interface{})
+			lo.ForEach(job.Tags, func(t Tag, i int) {
+				jobTags[t.Name] = t.Value
+			})
+		}
+
 		if job.Type == PythonJob {
 			commandName = "pythonshell"
-
-			if len(job.Role) > 0 {
-				jobRole = job.Role
-			} else {
-				jobRole = workflow.IamRole
-			}
-
-			defaultArguments = map[string]interface{}{}
-
-			if len(workflow.PythonModules) > 0 {
-				extraPyFiles := lo.Map(workflow.PythonModules, func(moduleName string, i int) string {
-					if strings.HasPrefix(moduleName, "s3://") {
-						return moduleName
-					}
-					return fmt.Sprintf("%s/%s", workflow.ArtifactsPath, moduleName)
-				})
-				defaultArguments["--extra-py-files"] = strings.Join(extraPyFiles, ",")
-			}
-
-			if job.Args != nil {
-				arguments, err := json.Marshal(job.Args)
-				if err != nil {
-					message := fmt.Sprintf("invalid arguments: %v", job.Args)
-					return "", errors.Wrap(err, message)
-				}
-
-				defaultArguments["--arguments"] = string(arguments)
-			}
-
-			var scriptLocation string
-			if !strings.HasPrefix(job.Entrypoint, "s3://") && workflow.ArtifactsPath != "" {
-				scriptLocation = workflow.ArtifactsPath + "/" + job.Entrypoint
-			} else {
-				scriptLocation = job.Entrypoint
-			}
 
 			properties := map[string]interface{}{
 				"Command": map[string]interface{}{
@@ -311,21 +316,49 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 				properties["DefaultArguments"] = defaultArguments
 			}
 
-			if job.Tags != nil && len(job.Tags) > 0 {
-				tags := make(map[string]interface{})
-				lo.ForEach(job.Tags, func(t Tag, i int) {
-					tags[t.Name] = t.Value
-				})
-
-				properties["Tags"] = tags
+			if len(jobTags) > 0 {
+				properties["Tags"] = jobTags
 			}
 
-			glueJob := map[string]interface{}{
+			resources[resourceName] = map[string]interface{}{
 				"Type":       "AWS::Glue::Job",
 				"Properties": properties,
 			}
+		} else if job.Type == PySparkJob {
+			commandName = "glueetl"
 
-			resources[resourceName] = glueJob
+			properties := map[string]interface{}{
+				"Command": map[string]interface{}{
+					"Name":           commandName,
+					"PythonVersion":  "3",
+					"ScriptLocation": scriptLocation,
+				},
+				"DefaultArguments": defaultArguments,
+				"Role":             jobRole,
+				"Name":             job.Name,
+				"GlueVersion":      "3.0",
+				"MaxCapacity":      2,
+				"ExecutionProperty": map[string]interface{}{
+					"MaxConcurrentRuns": 1,
+				},
+			}
+
+			if jobRole != "" {
+				properties["Role"] = jobRole
+			}
+
+			if defaultArguments != nil {
+				properties["DefaultArguments"] = defaultArguments
+			}
+
+			if len(jobTags) > 0 {
+				properties["Tags"] = jobTags
+			}
+
+			resources[resourceName] = map[string]interface{}{
+				"Type":       "AWS::Glue::Job",
+				"Properties": properties,
+			}
 		}
 	}
 
@@ -421,7 +454,7 @@ func (workflow *GlueWorkflow) Build() error {
 	}
 
 	for _, job := range workflow.Jobs {
-		if job.Type == PythonJob {
+		if job.Type == PythonJob || job.Type == PySparkJob {
 			if strings.HasPrefix(job.Entrypoint, "s3://") {
 				continue
 			}

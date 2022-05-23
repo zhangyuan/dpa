@@ -10,6 +10,8 @@ tags:
   lob: "sales"
 
 iam_role: iam-role-arn
+artifacts_path: s3://dpa-sampleproject-dev/myworkflow
+
 python_modules:
   - sampleproject-0.1-py3.6.egg
 
@@ -36,3 +38,12 @@ jobs:
       years: [2021, 2022]
     requires:
       - job_name: ingestion
+
+  transformation_spark:
+    description: "transform and load"
+    type: pyspark
+    entrypoint: sampleproject/jobs/transform_spark.py
+    args:
+      years: [2021, 2022]
+    requires:
+      - job_name: transformation
