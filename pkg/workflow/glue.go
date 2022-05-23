@@ -266,10 +266,13 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			defaultArguments = map[string]interface{}{}
 
 			if len(workflow.PythonModules) > 0 {
-				// extraPyFiles := lo.Map(workflow.PythonModules, func(moduleName string, i int) string {
-				// 	return fmt.Sprintf("%s/%s", workflow.ArtifactsPath, moduleName)
-				// })
-				defaultArguments["--extra-py-files"] = strings.Join(workflow.PythonModules, ",")
+				extraPyFiles := lo.Map(workflow.PythonModules, func(moduleName string, i int) string {
+					if strings.HasPrefix(moduleName, "s3://") {
+						return moduleName
+					}
+					return fmt.Sprintf("%s/%s", workflow.ArtifactsPath, moduleName)
+				})
+				defaultArguments["--extra-py-files"] = strings.Join(extraPyFiles, ",")
 			}
 
 			if job.Args != nil {
