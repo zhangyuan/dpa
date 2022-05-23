@@ -10,3 +10,5 @@ venv/
 __debug_bin
 /cover.out
 /.vscode
+*.swo
+*.swp

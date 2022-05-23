@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"dpa/pkg/helpers"
-	"dpa/pkg/python"
 	"fmt"
 	"os"
 	"strings"
@@ -265,14 +264,6 @@ func (workflow *GlueWorkflow) Render() (string, error) {
 			}
 
 			defaultArguments = map[string]interface{}{}
-
-			pythonModules, err := python.GetPythonRequirements(workflow.ProjectDirectory)
-			if err != nil {
-				return "", errors.Wrap(err, "fail to parse python requirements")
-			}
-			if len(pythonModules) > 0 {
-				defaultArguments["--additional-python-modules"] = pythonModules.ToString()
-			}
 
 			if len(workflow.PythonModules) > 0 {
 				// extraPyFiles := lo.Map(workflow.PythonModules, func(moduleName string, i int) string {
